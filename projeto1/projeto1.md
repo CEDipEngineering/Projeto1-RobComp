@@ -5,8 +5,10 @@
 # Rubrica
 
 
-C - Ficar na pista, encontrar creeper da cor certa, derrubar e voltar para a pista
+C - Ficar na pista, encontrar creeper da cor certa, derrubar e voltar para a 
+
 B - Pegar um creeper da cor certa, voltar para a pista e deixar na base 
+
 A - Pegar creeper da cor e Id certos. Deixar na base certa. Estar bem modularizado 
 
 

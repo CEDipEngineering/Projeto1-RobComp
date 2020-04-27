@@ -156,6 +156,7 @@ if __name__=="__main__":
 
     # Exemplo de categoria de resultados
     # [('chair', 86.965459585189819, (90, 141), (177, 265))]
+    # [(categoria, probabilidade (certeza), canto sup.esq do retângulo, canto inf.dir do retângulo)]
 
     try:
         # Inicializando - por default gira no sentido anti-horário
