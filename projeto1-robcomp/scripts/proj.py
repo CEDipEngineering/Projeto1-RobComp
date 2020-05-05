@@ -142,8 +142,6 @@ if __name__=="__main__":
 				# ai.identifyColor('magenta')
 				ai.showFrame()
 				
-				ai.showMask()
-
 			vel = Twist(velArr[0],velArr[1])
 			velocidade_saida.publish(vel)
 			rospy.sleep(0.1)

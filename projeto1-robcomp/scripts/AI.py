@@ -14,7 +14,7 @@ class AI:
 
     def __init__(self):
         self.frame = None
-        self.buffering = 10
+        self.buffering = 7
         self.lista_goodLeft = [0]*self.buffering
         self.lista_goodRight = [0]*self.buffering
         self.lydar = None
@@ -35,38 +35,34 @@ class AI:
             
             direction = targetX - currentX
             velArr = [Vector3(0,0,0), Vector3(0,0,0)]
-            if direction >= 3: 
+            if direction >= 10: 
                 velArr = [Vector3(0,0,0), Vector3(0,0,-0.1)]
-            elif direction <= -3:
+            elif direction <= -10:
                 velArr = [Vector3(0,0,0), Vector3(0,0,0.1)]
             return velArr
     
     def followRoad(self):
         if self.checkFrame():
             edges = self.treatForLines()
-            lines = cv2.HoughLines(edges,1,np.pi/180, 75)
+            minLineLength = 120
+            maxLineGap = 5
+            lines = cv2.HoughLinesP(edges,1,np.pi/180,120,minLineLength,maxLineGap)
             # print(lines)
+            
             if lines is not None:
                 for line in lines:
-                    for rho, theta in line:
-                        a = np.cos(theta)
-
-                        b = np.sin(theta)
-                        x0 = a * rho
-                        y0 = b * rho
-                        pt1 = Point(int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
-                        pt2 = Point(int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
-                        lin = Line(pt1, pt2)
-                        
-
-                        if lin.m < -2:
-                            self.lista_goodLeft.pop(0)
-                            self.lista_goodLeft.append(lin)
-                            cv2.line(self.modifiedFrame, pt1.getTuple(), pt2.getTuple(),(255,0,0),2)
-                        elif lin.m > 2:
-                            self.lista_goodRight.pop(0)
-                            self.lista_goodRight.append(lin)
-                            cv2.line(self.modifiedFrame, pt1.getTuple(), pt2.getTuple(),(255,0,0),2)
+                    x1, y1, x2, y2 = line[0]
+                    pt1 = Point(x1,y1)
+                    pt2 = Point(x2,y2)
+                    lin = Line(pt1,pt2)
+                    cv2.line(self.modifiedFrame, pt1.getTuple(), pt2.getTuple(),(255,0,0),2)
+                    print("m = " + str(lin.m))
+                    if lin.m == -1:
+                        self.lista_goodLeft.pop(0)
+                        self.lista_goodLeft.append(lin)
+                    elif lin.m == 0:
+                        self.lista_goodRight.pop(0)
+                        self.lista_goodRight.append(lin)
 
                 if 0 not in self.lista_goodLeft and 0 not in self.lista_goodRight:
                     average_Left = self.calculateMeanLine(self.lista_goodLeft)
@@ -120,11 +116,11 @@ class AI:
         pass
 
     def fastAdvance(self):
-        velArr = [Vector3(0.3,0,0), Vector3(0,0,0)]
+        velArr = [Vector3(0.2,0,0), Vector3(0,0,0)]
         return velArr
 
     def slowAdvance(self):
-        velArr = [Vector3(0.1,0,0), Vector3(0,0,0)]
+        velArr = [Vector3(0.05,0,0), Vector3(0,0,0)]
         return velArr
 
     def calculateMeanLine(self, linhas):
@@ -157,7 +153,7 @@ class AI:
             temp = cv2.cvtColor(self.frame, cv2.COLOR_BGR2HSV)
             mask = cv2.inRange(cv2.GaussianBlur(temp,(5,5),0),np.array([0,0,200]),np.array([180,10,255]))
             # print(str(mask.shape) + " : " + str(self.lookDownMask.shape))
-            # mask = cv2.bitwise_and(mask, self.lookDownMask)
+            mask = cv2.bitwise_and(mask, self.lookDownMask)
             morphMask = cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((3, 3)))
             contornos, arvore = cv2.findContours(morphMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             frame_out = cv2.drawContours(morphMask, contornos, -1, [0, 0, 255], 3)
