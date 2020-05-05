@@ -6,6 +6,7 @@ from geometry_msgs.msg import Twist, Vector3
 from cv_bridge import CvBridge, CvBridgeError
 import visao_module
 import rospy
+import matplotlib.pyplot as plt
 
 
 class AI:
@@ -17,25 +18,29 @@ class AI:
         self.lista_goodRight = [0]*self.buffering
         self.lydar = None
         self.__acceptableDelay__ = 1.5E9
-        self.cv_bridge = CvBridge() 
         self.mobileNetResults = None
+        self.modifiedFrame = None
 
     def alignToTarget(self, point):
         if self.checkFrame():
             targetX = point.x
-            currentX = self.frame.shape[0]//2
+            currentX = self.frame.shape[1]//2
+
+            # cv2.circle(self.modifiedFrame, (self.frame.shape[1]/2,self.frame.shape[0]/2), 2,(0,0,255), 5)
+            
             direction = targetX - currentX
             velArr = [Vector3(0,0,0), Vector3(0,0,0)]
-            if direction >= 3: 
+            if direction >= 2: 
                 velArr = [Vector3(0,0,0), Vector3(0,0,-0.1)]
-            elif direction <= -3:
+            elif direction <= -2:
                 velArr = [Vector3(0,0,0), Vector3(0,0,0.1)]
             return velArr
     
     def followRoad(self):
         if self.checkFrame():
-            edges = self.__treatForLines__(self.frame.copy())
+            edges = self.treatForLines()
             lines = cv2.HoughLines(edges,1,np.pi/180, 75)
+            # print(lines)
             if lines is not None:
                 for line in lines:
                     for rho, theta in line:
@@ -48,23 +53,24 @@ class AI:
                         pt2 = Point(int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
                         lin = Line(pt1, pt2)
 
-                        if lin.m < -0.2:
+                        if lin.m < -0.1:
                             self.lista_goodLeft.pop(0)
                             self.lista_goodLeft.append(lin)
-                        elif lin.m > 0.2:
+                        elif lin.m > 0.1:
                             self.lista_goodRight.pop(0)
                             self.lista_goodRight.append(lin)
 
 
                 if 0 not in self.lista_goodLeft and 0 not in self.lista_goodRight:
-                    average_Left = self.__calculateMeanLine__(self.lista_goodLeft)
-                    average_Right = self.__calculateMeanLine__(self.lista_goodRight)
+                    average_Left = self.calculateMeanLine(self.lista_goodLeft)
+                    average_Right = self.calculateMeanLine(self.lista_goodRight)
                     a, b = average_Left.getPoints()
                     c, d = average_Right.getPoints()
-                    # cv2.line(frame, a, b,(255,0,0),2)
-                    # cv2.line(frame, c, d,(255,0,0),2)
+                    cv2.line(self.modifiedFrame, a, b,(255,0,0),2)
+                    cv2.line(self.modifiedFrame, c, d,(255,0,0),2)
                     inter = average_Left.intersect(average_Right)
-                    cv2.circle(frame, inter, 5,(0,255,255), 5)
+                    cv2.circle(self.modifiedFrame, inter.getTuple(), 5,(0,255,255), 5)
+                    
                     return inter
                 else:
                     return
@@ -94,7 +100,7 @@ class AI:
         velArr = [Vector3(0.1,0,0), Vector3(0,0,0)]
         return velArr
 
-    def __calculateMeanLine__(self, linhas):
+    def calculateMeanLine(self, linhas):
         first_point_x = int(round(np.mean([linha.point1.x for linha in linhas])))
         first_point_y = int(round(np.mean([linha.point1.y for linha in linhas])))
         second_point_x = int(round(np.mean([linha.point2.x for linha in linhas])))
@@ -103,7 +109,7 @@ class AI:
         second_point = Point(second_point_x, second_point_y)
         return Line(first_point, second_point)
 
-    def __auto_canny__(self, sigma=0.33):
+    def auto_canny(self, sigma=0.33):
         if self.checkFrame():
             # compute the median of the single channel pixel intensities
             v = np.median(self.frame.copy())
@@ -116,37 +122,40 @@ class AI:
             # return the edged image
             return edged
     
-    def __treatForLines__(self):
+    def treatForLines(self):
+        # print("Chamou treatForLines")
         if self.checkFrame():
+            # print("Entrou checkFrame")
             # Shape detection using color (cv2.inRange masks are applied over orginal image)
-            mask = cv2.inRange(cv2.GaussianBlur(self.frame.copy(),(5,5),0),np.array([0,0,0]),np.array([10,10,255]))
-            morphMask = cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((6, 6)))
+            temp = cv2.cvtColor(self.frame, cv2.COLOR_BGR2HSV)
+            mask = cv2.inRange(cv2.GaussianBlur(temp,(5,5),0),np.array([0,0,200]),np.array([180,10,255]))
+            morphMask = cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((3, 3)))
             contornos, arvore = cv2.findContours(morphMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             frame_out = cv2.drawContours(morphMask, contornos, -1, [0, 0, 255], 3)
             return frame_out
 
     def setFrame(self, frame):
         self.frame = frame
+        self.modifiedFrame = frame.copy()
         return
     
+    def showFrame(self):
+        cv2.imshow('teste' , self.modifiedFrame)
+        cv2.waitKey(1)
+        return
+
+
+    def showMask(self):
+        cv2.imshow('mask' , self.treatForLines())
+        cv2.waitKey(1)
+        return
+
     def mobileNet(self):
 
         if self.checkFrame():
-            now = rospy.get_rostime()
-            imgtime = self.frame.header.stamp
-            lag = now-imgtime # calcula o lag
-            delay = lag.nsecs
             # print("delay ", "{:.3f}".format(delay/1.0E9))
-            if delay > self.__acceptableDelay__:
-                print("Descartando por causa do delay do frame:", delay)
-                self.mobileNetResults = None
-                return 
             try:
-                antes = time.clock()
-                cv_image = self.cv_bridge.compressed_imgmsg_to_cv2(self.frame, "bgr8")
-
-                _a_, _b_, resultados =  visao_module.processa(cv_image)        
-                depois = time.clock()
+                _a_, _b_, resultados =  visao_module.processa(self.frame, showFrame=False)        
                 self.mobileNetResults = resultados
                 return resultados
             except CvBridgeError as e:
@@ -155,5 +164,5 @@ class AI:
                 return 
 
     def checkFrame(self):
-        return self.frame != None
+        return (self.frame is not None)
         

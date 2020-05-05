@@ -4,6 +4,9 @@ class Point():
         self.x = x
         self.y = y
 
+    def getTuple(self):
+        return (self.x, self.y)
+
 
 
 class Line():
@@ -28,7 +31,7 @@ class Line():
         out_x = int(round(((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4))/((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))))
         out_y = int(round(((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4))/((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))))
         out = Point(out_x, out_y)
-        return (out_x, out_y)
+        return out
     
     def getPoints(self):
         return ((self.point1.x, self.point1.y), (self.point2.x, self.point2.y))

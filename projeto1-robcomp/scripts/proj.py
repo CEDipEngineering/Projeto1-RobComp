@@ -31,7 +31,7 @@ cv_image = None
 media = []
 centro = []
 atraso = 1.5E9 # 1 segundo e meio. Em nanossegundos
-from nav_msgs.msg import Odometrfrom nav_msgs.msg import Odometryy
+from nav_msgs.msg import Odometry
 
 area = 0.0 # Variavel com a area do maior contorno
 
@@ -93,42 +93,58 @@ def recebe(msg):
 
 
 def roda_todo_frame(imagem):
-    ai.setFrame(imagem)
+	frame  = bridge.compressed_imgmsg_to_cv2(imagem, "bgr8")
+	ai.setFrame(frame)	
 
 
 
     
 if __name__=="__main__":
 
-    rospy.init_node("cor")
-    topico_imagem = "/camera/rgb/image_raw/compressed"
-    topico_imagem2 = "/raspicam/rgb/image_raw/compressed"
-    recebedor = rospy.Subscriber(topico_imagem, CompressedImage, roda_todo_frame, queue_size=4, buff_size = 2**24)
-    recebedor = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, recebe) # Para recebermos notificacoes de que marcadores foram vistos
-    # print("Usando ", topico_imagem)
+	rospy.init_node("cor")
+	topico_imagem = "/camera/rgb/image_raw/compressed"
+	topico_imagem2 = "/raspicam/rgb/image_raw/compressed"
+	recebedor = rospy.Subscriber(topico_imagem2, CompressedImage, roda_todo_frame, queue_size=4, buff_size = 2**24)
+	# recebedor = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, recebe) # Para recebermos notificacoes de que marcadores foram vistos
+	# print("Usando ", topico_imagem)
 
-    velocidade_saida = rospy.Publisher("/cmd_vel", Twist, queue_size = 1)
+	velocidade_saida = rospy.Publisher("/cmd_vel", Twist, queue_size = 1)
 
 
-    tolerancia = 25
+	tolerancia = 25
 
-    # Exemplo de categoria de resultados
-    # [('chair', 86.965459585189819, (90, 141), (177, 265))]
-    # [(categoria, probabilidade (certeza), canto sup.esq do retângulo, canto inf.dir do retângulo)]
+	# Exemplo de categoria de resultados
+	# [('chair', 86.965459585189819, (90, 141), (177, 265))]
+	# [(categoria, probabilidade (certeza), canto sup.esq do retângulo, canto inf.dir do retângulo)]
 
-    try:
-       
-        while not rospy.is_shutdown():
-            if ai.checkFrame():
-                ai.mobileNet()
-                resultados = ai.mobileNetResults
-                for r in resultados:
-                    print(r)
-                
-            #velocidade_saida.publish(vel)
-            rospy.sleep(0.1)
+	try:
+		while not rospy.is_shutdown():
+			velArr = [Vector3(0,0,0),Vector3(0,0,0)]
+			if ai.checkFrame():
+				streetPoint = ai.followRoad()
+				if streetPoint is not None:
+					velArr = ai.alignToTarget(streetPoint)
+					if velArr[1] == Vector3(0,0,0):
+						velArr = ai.fastAdvance()
+				# else:
+				# 	velArr = [Vector3(0,0,0),Vector3(0,0,0.1)]
 
-    except rospy.ROSInterruptException:
-        print("Ocorreu uma exceção com o rospy")
+
+
+
+
+				# ai.mobileNet()
+				# resultados = ai.mobileNetResults
+				# for r in resultados:
+				# 	print(r)
+				ai.showFrame()
+				ai.showMask()
+
+			vel = Twist(velArr[0],velArr[1])
+			velocidade_saida.publish(vel)
+			rospy.sleep(0.1)
+
+	except rospy.ROSInterruptException:
+		print("Ocorreu uma exceção com o rospy")
 
 

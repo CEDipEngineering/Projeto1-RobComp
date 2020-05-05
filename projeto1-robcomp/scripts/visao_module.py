@@ -18,7 +18,7 @@ import mobilenet_simples as mnet
 
 
 
-def processa(frame):
+def processa(frame, showFrame = False):
     '''Use esta funcao para basear o processamento do seu robo'''
 
     result_frame, result_tuples = mnet.detect(frame)
@@ -32,8 +32,10 @@ def processa(frame):
 
     cross(result_frame, centro, [255,0,0], 1, 17)
 
-    cv2.imshow('video', result_frame)
-    cv2.waitKey(1)
+
+    if showFrame:
+        cv2.imshow('video', result_frame)
+        cv2.waitKey(1)
 
     return centro, result_frame, result_tuples
 
