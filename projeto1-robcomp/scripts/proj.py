@@ -104,7 +104,7 @@ if __name__=="__main__":
 	rospy.init_node("cor")
 	topico_imagem = "/camera/rgb/image_raw/compressed"
 	topico_imagem2 = "/raspicam/rgb/image_raw/compressed"
-	recebedor = rospy.Subscriber(topico_imagem2, CompressedImage, roda_todo_frame, queue_size=4, buff_size = 2**24)
+	recebedor = rospy.Subscriber(topico_imagem, CompressedImage, roda_todo_frame, queue_size=4, buff_size = 2**24)
 	# recebedor = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, recebe) # Para recebermos notificacoes de que marcadores foram vistos
 	# print("Usando ", topico_imagem)
 
@@ -121,13 +121,14 @@ if __name__=="__main__":
 		while not rospy.is_shutdown():
 			velArr = [Vector3(0,0,0),Vector3(0,0,0)]
 			if ai.checkFrame():
+				# print(ai.frame.shape)
 				streetPoint = ai.followRoad()
 				if streetPoint is not None:
 					velArr = ai.alignToTarget(streetPoint)
 					if velArr[1] == Vector3(0,0,0):
 						velArr = ai.fastAdvance()
-				# else:
-				# 	velArr = [Vector3(0,0,0),Vector3(0,0,0.1)]
+				else:
+					velArr = [Vector3(0,0,0),Vector3(0,0,0.1)]
 
 
 
@@ -137,7 +138,10 @@ if __name__=="__main__":
 				# resultados = ai.mobileNetResults
 				# for r in resultados:
 				# 	print(r)
+
+				# ai.identifyColor('magenta')
 				ai.showFrame()
+				
 				ai.showMask()
 
 			vel = Twist(velArr[0],velArr[1])
