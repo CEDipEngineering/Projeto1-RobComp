@@ -14,7 +14,7 @@ class AI:
 
     def __init__(self):
         self.frame = None
-        self.buffering = 7
+        self.buffering = 5
         self.lista_goodLeft = [0]*self.buffering
         self.lista_goodRight = [0]*self.buffering
         self.lydar = None
@@ -35,18 +35,18 @@ class AI:
             
             direction = targetX - currentX
             velArr = [Vector3(0,0,0), Vector3(0,0,0)]
-            if direction >= 10: 
-                velArr = [Vector3(0,0,0), Vector3(0,0,-0.1)]
-            elif direction <= -10:
-                velArr = [Vector3(0,0,0), Vector3(0,0,0.1)]
+            if direction >= 8: 
+                velArr = [Vector3(0,0,0), Vector3(0,0,-0.07)]
+            elif direction <= -8:
+                velArr = [Vector3(0,0,0), Vector3(0,0,0.07)]
             return velArr
     
     def followRoad(self):
         if self.checkFrame():
             edges = self.treatForLines()
-            minLineLength = 120
-            maxLineGap = 5
-            lines = cv2.HoughLinesP(edges,1,np.pi/180,120,minLineLength,maxLineGap)
+            minLineLength = 220
+            maxLineGap = 8
+            lines = cv2.HoughLinesP(edges,1,np.pi/180,180,minLineLength,maxLineGap)
             # print(lines)
             
             if lines is not None:
@@ -55,8 +55,8 @@ class AI:
                     pt1 = Point(x1,y1)
                     pt2 = Point(x2,y2)
                     lin = Line(pt1,pt2)
-                    cv2.line(self.modifiedFrame, pt1.getTuple(), pt2.getTuple(),(255,0,0),2)
-                    print("m = " + str(lin.m))
+                    # cv2.line(self.modifiedFrame, pt1.getTuple(), pt2.getTuple(),(255,0,0),2)
+                    # print("m = " + str(lin.m))
                     if lin.m == -1:
                         self.lista_goodLeft.pop(0)
                         self.lista_goodLeft.append(lin)
@@ -69,8 +69,8 @@ class AI:
                     average_Right = self.calculateMeanLine(self.lista_goodRight)
                     a, b = average_Left.getPoints()
                     c, d = average_Right.getPoints()
-                    # cv2.line(self.modifiedFrame, a, b,(255,0,0),2)
-                    # cv2.line(self.modifiedFrame, c, d,(255,0,0),2)
+                    cv2.line(self.modifiedFrame, a, b,(255,0,0),2)
+                    cv2.line(self.modifiedFrame, c, d,(255,0,0),2)
                     inter = average_Left.intersect(average_Right)
                     cv2.circle(self.modifiedFrame, inter.getTuple(), 5,(0,255,255), 5)
                     
@@ -116,11 +116,11 @@ class AI:
         pass
 
     def fastAdvance(self):
-        velArr = [Vector3(0.2,0,0), Vector3(0,0,0)]
+        velArr = [Vector3(0.17,0,0), Vector3(0,0,0)]
         return velArr
 
     def slowAdvance(self):
-        velArr = [Vector3(0.05,0,0), Vector3(0,0,0)]
+        velArr = [Vector3(0.08,0,0), Vector3(0,0,0)]
         return velArr
 
     def calculateMeanLine(self, linhas):
@@ -151,7 +151,7 @@ class AI:
             # print("Entrou checkFrame")
             # Shape detection using color (cv2.inRange masks are applied over orginal image)
             temp = cv2.cvtColor(self.frame, cv2.COLOR_BGR2HSV)
-            mask = cv2.inRange(cv2.GaussianBlur(temp,(5,5),0),np.array([0,0,200]),np.array([180,10,255]))
+            mask = cv2.inRange(cv2.GaussianBlur(temp.copy(),(3,3),0),np.array([0,0,200]),np.array([180,10,255]))
             # print(str(mask.shape) + " : " + str(self.lookDownMask.shape))
             mask = cv2.bitwise_and(mask, self.lookDownMask)
             morphMask = cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((3, 3)))

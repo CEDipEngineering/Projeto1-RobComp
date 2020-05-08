@@ -128,7 +128,7 @@ if __name__=="__main__":
 					if velArr[1] == Vector3(0,0,0):
 						velArr = ai.fastAdvance()
 				else:
-					velArr = [Vector3(0,0,0),Vector3(0,0,0.1)]
+					velArr = [Vector3(0,0,0),Vector3(0,0,0.07)]
 
 
 
