@@ -14,7 +14,7 @@ class AI:
 
     def __init__(self):
         self.frame = None
-        self.buffering = 5
+        self.buffering = 10
         self.lista_goodLeft = [0]*self.buffering
         self.lista_goodRight = [0]*self.buffering
         self.leftBuffer = 0
@@ -26,6 +26,13 @@ class AI:
         self.lookDownMask = cv2.imread("Projeto1-RobComp/projeto1-robcomp/scripts/mask.png")
         self.lookDownMask = cv2.cvtColor(self.lookDownMask, cv2.COLOR_BGR2GRAY)
         self.target = []
+        # self.lookDownMask = cv2.imread("Projeto1-RobComp/projeto1-robcomp/scripts/mask.png")
+        # self.lookDownMask = cv2.cvtColor(self.lookDownMask, cv2.COLOR_BGR2GRAY)
+        self.x_0 = None
+        self.y_0 = None
+        self.x   = None
+        self.y   = None
+        self.angulo = None
 
     def alignToTarget(self, point):
         if self.checkFrame():
@@ -183,7 +190,7 @@ class AI:
             temp = cv2.cvtColor(self.frame, cv2.COLOR_BGR2HSV)
             mask = cv2.inRange(cv2.GaussianBlur(temp.copy(),(3,3),0),np.array([0,0,200]),np.array([180,10,255]))
             # print(str(mask.shape) + " : " + str(self.lookDownMask.shape))
-            mask = cv2.bitwise_and(mask, self.lookDownMask)
+            # mask = cv2.bitwise_and(mask, self.lookDownMask)
             morphMask = cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((3, 3)))
             contornos, arvore = cv2.findContours(morphMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             frame_out = cv2.drawContours(morphMask, contornos, -1, [0, 0, 255], 3)
@@ -263,3 +270,86 @@ class AI:
         #cv2.waitKey(1)
 
         return media, maior_contorno_area
+    
+    def checkAngle(self,found):
+        angulocorreto = np.arctan((self.y-self.y_0/self.x-self.x_0))*180/np.pi
+        kappa = [Vector3(0,0,0), Vector3(0,0,0)]
+
+        print(angulocorreto, self.angulo, "alvo; atual")
+        
+        if abs(angulocorreto-self.angulo) >= 10:
+            kappa = [Vector3(0,0,0), Vector3(0,0,0.4)]
+            return kappa, found
+        
+        
+        # if self.x==self.x_0 and self.y>self.y_0:
+        #     angulocorreto = -90
+        #     if (self.angulo < (angulocorreto+0.05) and self.angulo > (angulocorreto-0.05)) == False:
+        #         kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
+        #         return kappa, found
+        #     found = 1
+        #     return kappa, found
+        # elif self.x==self.x_0 and self.y<self.y_0:
+        #     angulocorreto = 90 
+        #     if (self.angulo < (angulocorreto+0.05) and self.angulo > (angulocorreto-0.05)) == False:
+        #         kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
+        #         return kappa, found
+        #     found = 1
+        #     return kappa, found
+        # elif self.y==self.y_0 and self.x>self.x_0:
+        #     angulocorreto = -180 
+        #     if (self.angulo < (angulocorreto+0.05) and self.angulo > (angulocorreto-0.05)) == False:
+        #         kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
+        #         return kappa, found
+        #     found = 1
+        #     return kappa, found
+        # elif self.y==self.y_0 and self.x<self.x_0:
+        #     angulocorreto = 0
+        #     if (self.angulo < (angulocorreto+0.05) and self.angulo > (angulocorreto-0.05)) == False:
+        #         kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
+        #         return kappa, found
+        #     found = 1
+        #     return kappa, found
+        # elif self.x>self.x_0 and self.y>self.y_0:
+        #     if (self.angulo < (angulocorreto+0.05-180) and self.angulo > (angulocorreto-0.05-180)) == False:
+        #         kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
+        #         return kappa, found
+        #     found = 1
+        #     return kappa, found
+        # elif self.x<self.x_0 and self.y<self.y_0:
+        #     if (self.angulo < (angulocorreto+0.05) and self.angulo > (angulocorreto-0.05)) == False:
+        #         kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
+        #         return kappa, found
+        #     found = 1
+        #     return kappa, found
+        # elif self.x>self.x_0 and self.y<self.y_0:
+        #     if (self.angulo < (angulocorreto+0.05+180) and self.angulo > (angulocorreto-0.05+180)) == False:
+        #         kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
+        #         return kappa, found
+        #     found = 1
+        #     return kappa, found
+        # elif self.x<self.x_0 and self.y>self.y_0:
+        #     if (self.angulo < (angulocorreto+0.05) and self.angulo > (angulocorreto-0.05)) == False:
+        #         kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
+        #         return kappa, found
+        #     found = 1
+        #     return kappa, found
+        
+        return kappa, found
+
+    def ateChegar(self, chegou):
+        kappa = [Vector3(0,0,0), Vector3(0,0,0)]
+        if ((self.x>(self.x_0 + 0.01) or self.x<(self.x_0-0.01)) and ((self.y>self.y_0 + 0.01) or self.y<(self.y_0-0.01))) == True:
+            kappa = [Vector3(0.1,0,0), Vector3(0,0,0)]
+            return kappa, chegou
+        chegou = 1
+        return kappa, chegou
+
+    def setReturningPoint(self, x_return, y_return):
+        self.x_0 = x_return
+        self.y_0 = y_return
+
+    def CurrPos(self, x_instant, y_instant, ang_instant):
+        self.x = x_instant
+        self.y = y_instant
+        self.angulo = ang_instant

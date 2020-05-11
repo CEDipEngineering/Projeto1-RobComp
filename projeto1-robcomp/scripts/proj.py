@@ -10,7 +10,7 @@ import cv2
 import time
 from sensor_msgs.msg import Image, CompressedImage
 from cv_bridge import CvBridge, CvBridgeError
-# from tf import transformations
+from tf import transformations
 # from tf import TransformerROS
 from ar_track_alvar_msgs.msg import AlvarMarker, AlvarMarkers
 from nav_msgs.msg import Odometry
@@ -45,6 +45,12 @@ x = 0
 y = 0
 z = 0 
 id = 0
+xOdom = 0
+yOdom = 0
+contador = 0
+angrobot = 0
+pula = 2
+angleStatus = 0 #resetar dps que voltar ao ponto inicial
 
 frame = "camera_link"
 # frame = "head_camera"  # DESCOMENTE para usar com webcam USB via roslaunch tag_tracking usbcam
@@ -87,9 +93,24 @@ def recebe(msg):
 		x_robo = [1,0,0]
 		cosa = np.dot(n2, x_robo) # Projecao do vetor normal ao marcador no x do robo
 		angulo_marcador_robo = math.degrees(math.acos(cosa))
-
 		# Terminamos
 		# print("id: {} x {} y {} z {} angulo {} ".format(id, x,y,z, angulo_marcador_robo))
+
+def recebe_odometria(data):
+	global xOdom
+	global yOdom
+	global contador
+	global angrobot
+
+	xOdom = data.pose.pose.position.x
+	yOdom = data.pose.pose.position.y
+
+	quat = data.pose.pose.orientation
+	lista = [quat.x, quat.y, quat.z, quat.w]
+	angulos = np.degrees(transformations.euler_from_quaternion(lista))    
+	angrobot = angulos[2]
+	ai.CurrPos(xOdom, yOdom, angrobot)
+		
 
 
 def roda_todo_frame(imagem):
@@ -109,8 +130,11 @@ if __name__=="__main__":
 	# print("Usando ", topico_imagem)
 
 	velocidade_saida = rospy.Publisher("/cmd_vel", Twist, queue_size = 1)
+	ref_odometria = rospy.Subscriber("/odom", Odometry, recebe_odometria)
 
-
+	t0 = rospy.get_rostime()
+	girando = 0
+	chegou = 0
 	tolerancia = 25
 
 	# Exemplo de categoria de resultados
@@ -120,15 +144,15 @@ if __name__=="__main__":
 	try:
 		while not rospy.is_shutdown():
 			velArr = [Vector3(0,0,0),Vector3(0,0,0)]
-			if ai.checkFrame():
-				# print(ai.frame.shape)
-				streetPoint = ai.followRoad()
-				if streetPoint is not None:
-					velArr = ai.alignToTarget(streetPoint)
-					if velArr[1] == Vector3(0,0,0):
-						velArr = ai.fastAdvance()
-				else:
-					velArr = [Vector3(0,0,0),Vector3(0,0,0.07)]
+			# if ai.checkFrame():
+			# 	# print(ai.frame.shape)
+			# 	streetPoint = ai.followRoad()
+			# 	if streetPoint is not None:
+			# 		velArr = ai.alignToTarget(streetPoint)
+			# 		if velArr[1] == Vector3(0,0,0):
+			# 			velArr = ai.fastAdvance()
+			# 	else:
+			# 		velArr = [Vector3(0,0,0),Vector3(0,0,0.07)]
 
 
 
@@ -138,13 +162,33 @@ if __name__=="__main__":
 				# resultados = ai.mobileNetResults
 				# for r in resultados:
 				# 	print(r)
+			# roda_todo_frame(topico_imagem)
+			print("t0", t0)
+			if t0.nsecs == 0:
+				t0 = rospy.get_rostime()
+				print("waiting for timer")
+				continue        
+			t1 = rospy.get_rostime()
+			elapsed = (t1 - t0)
+			print("Passaram ", elapsed.secs, " segundos")
+			if elapsed.secs == 1:
+				raw_input("Manda um enter pra eu salvar a posicao")
+				ai.setReturningPoint(xOdom, yOdom)
+				# t0 = rospy.get_rostime()
+			if elapsed.secs >= 15:
+				if girando == 0:
+					velArr, girando = ai.checkAngle(girando)
+				# if chegou == 0:
+				# 	print("Cheguei! WooHoo")
+				# 	velArr, chegou = ai.ateChegar(chegou)
 
-				# ai.identifyColor('magenta')
-				ai.showFrame()
-				
-			vel = Twist(velArr[0],velArr[1])
+			print(ai.x, ai.y, "Estou aqui")
+			print(ai.x_0, ai.y_0, "Voltarei para ca")
+			vel = Twist(velArr[0], velArr[1])
 			velocidade_saida.publish(vel)
-			rospy.sleep(0.1)
+			# print(velArr)
+			rospy.sleep(0.5)
+
 
 	except rospy.ROSInterruptException:
 		print("Ocorreu uma exceção com o rospy")
