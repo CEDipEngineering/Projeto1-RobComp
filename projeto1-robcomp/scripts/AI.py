@@ -17,12 +17,15 @@ class AI:
         self.buffering = 5
         self.lista_goodLeft = [0]*self.buffering
         self.lista_goodRight = [0]*self.buffering
+        self.leftBuffer = 0
+        self.rightBuffer = 0
         self.lydar = None
         self.__acceptableDelay__ = 1.5E9
         self.mobileNetResults = None
         self.modifiedFrame = None
         self.lookDownMask = cv2.imread("Projeto1-RobComp/projeto1-robcomp/scripts/mask.png")
         self.lookDownMask = cv2.cvtColor(self.lookDownMask, cv2.COLOR_BGR2GRAY)
+        self.target = []
 
     def alignToTarget(self, point):
         if self.checkFrame():
@@ -48,6 +51,10 @@ class AI:
             maxLineGap = 8
             lines = cv2.HoughLinesP(edges,1,np.pi/180,180,minLineLength,maxLineGap)
             # print(lines)
+
+            # Conta numero de retas reais em cada lista
+            tempLenLeft = self.lista_goodLeft[:]
+            tempLenRight = self.lista_goodRight[:]
             
             if lines is not None:
                 for line in lines:
@@ -63,6 +70,29 @@ class AI:
                     elif lin.m == 0:
                         self.lista_goodRight.pop(0)
                         self.lista_goodRight.append(lin)
+
+
+
+                # # Se alguma das listas nao mudou, incrementa o buffer daquele lado, se mudou, reinicia o buffer.
+                # if tempLenLeft == self.lista_goodLeft:
+                #     self.leftBuffer += 1
+                # else:
+                #     self.leftBuffer = 0
+
+                # if tempLenRight == self.lista_goodRight:
+                #     self.rightBuffer += 1
+                # else:
+                #     self.rightBuffer = 0
+                
+                # # Se nao mudam a muito tempo, reinicia as listas
+                # if self.leftBuffer >= 10:
+                #     self.leftBuffer = 0
+                #     self.lista_goodLeft = [0]*self.buffering
+                # if self.rightBuffer >= 10:
+                #     self.rightBuffer = 0
+                #     self.lista_goodRight = [0]*self.buffering
+
+
 
                 if 0 not in self.lista_goodLeft and 0 not in self.lista_goodRight:
                     average_Left = self.calculateMeanLine(self.lista_goodLeft)
