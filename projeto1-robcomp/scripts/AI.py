@@ -33,6 +33,9 @@ class AI:
         self.x   = None
         self.y   = None
         self.angulo = None
+        self.counters = {
+            "FramesSemAlinhar": 0
+        }
 
     def alignToTarget(self, point):
         if self.checkFrame():
@@ -45,9 +48,11 @@ class AI:
             
             direction = targetX - currentX
             velArr = [Vector3(0,0,0), Vector3(0,0,0)]
-            if direction >= 8: 
+            
+            tol = 5
+            if direction >= tol: 
                 velArr = [Vector3(0,0,0), Vector3(0,0,-0.07)]
-            elif direction <= -8:
+            elif direction <= -tol:
                 velArr = [Vector3(0,0,0), Vector3(0,0,0.07)]
             return velArr
     
@@ -115,7 +120,6 @@ class AI:
                 else:
                     return
 
-
     def identifyColor(self, color):
         colorDict = {
             "blue":[np.array([90,80,80]), np.array([155,255,255])],
@@ -133,16 +137,11 @@ class AI:
         cv2.circle(self.modifiedFrame, (point[0], point[1]), 3, (0,0,0), 2)
         point = Point(point[0], point[1])
         
-        if area > 100:
+        if area > 150:
             return point
         return    
 
-
-
     def identifyId(self):
-        pass
-
-    def stop(self):
         pass
 
     def searchRotate(self):
@@ -202,16 +201,15 @@ class AI:
         return
     
     def showFrame(self):
-        cv2.imshow('teste' , self.modifiedFrame)
-        cv2.waitKey(1)
+        if self.checkFrame():
+            cv2.imshow('teste' , self.modifiedFrame)
+            cv2.waitKey(1)
         return
-
 
     def showMask(self):
         cv2.imshow('mask' , self.treatForLines())
         cv2.waitKey(1)
         return
-
 
     def mobileNet(self):
 
@@ -277,6 +275,8 @@ class AI:
 
         print(angulocorreto, self.angulo, "alvo; atual")
         
+
+        # if dx > 0 (esquerda), gire para um lado, para direita, gire para outro
         if abs(angulocorreto-self.angulo) >= 10:
             kappa = [Vector3(0,0,0), Vector3(0,0,0.4)]
             return kappa, found
@@ -353,3 +353,27 @@ class AI:
         self.x = x_instant
         self.y = y_instant
         self.angulo = ang_instant
+
+    def detectProximity(self):
+        arc = range(-15,15)
+        if self.lydar is not None:
+            close = [x <= 0.35 for x in self.lydar]
+            print([close[i] for i in arc])
+            return np.any([close[i] for i in arc])
+        return
+
+    def setDistance(self, target):
+        if self.lydar is not None:
+            velArr = [Vector3(0,0,0),Vector3(0,0,0)]
+            if self.lydar[0] >= target + 0.03:
+                velArr = [Vector3(0.01,0,0),Vector3(0,0,0)]
+            elif self.lydar[0] <= target - 0.03:
+                velArr = [Vector3(-0.01,0,0),Vector3(0,0,0)]                 
+            return velArr
+        return
+
+    def stop(self):
+        return [Vector3(0,0,0), Vector3(0,0,0)]
+
+
+

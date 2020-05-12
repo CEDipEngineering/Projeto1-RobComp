@@ -22,6 +22,7 @@ from geometry_msgs.msg import Twist, Vector3, Pose, Vector3Stamped
 
 from AI import AI
 import visao_module
+from sensor_msgs.msg import LaserScan
 
 
 bridge = CvBridge()
@@ -117,7 +118,8 @@ def roda_todo_frame(imagem):
 	frame  = bridge.compressed_imgmsg_to_cv2(imagem, "bgr8")
 	ai.setFrame(frame)	
 
-
+def pegaDadosLydar(data):
+	ai.lydar = data.ranges
 
     
 if __name__=="__main__":
@@ -126,6 +128,7 @@ if __name__=="__main__":
 	topico_imagem = "/camera/rgb/image_raw/compressed"
 	topico_imagem2 = "/raspicam/rgb/image_raw/compressed"
 	recebedor = rospy.Subscriber(topico_imagem, CompressedImage, roda_todo_frame, queue_size=4, buff_size = 2**24)
+	recebe_scan = rospy.Subscriber("/scan", LaserScan, pegaDadosLydar)
 	# recebedor = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, recebe) # Para recebermos notificacoes de que marcadores foram vistos
 	# print("Usando ", topico_imagem)
 
@@ -142,51 +145,187 @@ if __name__=="__main__":
 	# [(categoria, probabilidade (certeza), canto sup.esq do retângulo, canto inf.dir do retângulo)]
 
 	try:
+
+		ai.target = ['blue', 0 , 'dog']
+		#goal1 = ["blue", 11, "cat"]
+		#goal2 = ["green", 21, "dog"]
+		#goal3 = ["magenta", 12, "bike"]
+
+
+
+		stateMachine = {
+			"Vagando": 1,
+			"AlinhandoCor": 1,
+			"Avancando": 0,
+			"Parado": 0,
+			"Pegando": 0,
+			"Voltando": 0,
+			"ProcurandoDeposito": 0,
+			"CorrigindoDistancia": 0,
+			"ReturnPointSet": 0
+		}
+
 		while not rospy.is_shutdown():
+			
 			velArr = [Vector3(0,0,0),Vector3(0,0,0)]
-			# if ai.checkFrame():
-			# 	# print(ai.frame.shape)
-			# 	streetPoint = ai.followRoad()
-			# 	if streetPoint is not None:
-			# 		velArr = ai.alignToTarget(streetPoint)
-			# 		if velArr[1] == Vector3(0,0,0):
-			# 			velArr = ai.fastAdvance()
-			# 	else:
-			# 		velArr = [Vector3(0,0,0),Vector3(0,0,0.07)]
+
+			# print(ai.detectProximity())
+			# if ai.detectProximity():
+			# 	ai.setDistance(0.25)
+			# 	print(ai.lydar[0])
+			# else:
+			# 	velArr = ai.fastAdvance()
+
+
+			
+			if ai.checkFrame():
+
+				if 1 not in stateMachine.values():
+					print("Fiquei entediado")
+					stateMachine["Vagando"] = 1
+				
+
+				if stateMachine["Parado"]:
+					velArr = [Vector3(0,0,0),Vector3(0,0,0)]
+				else:
+					# print("nao estou parado")
+					if stateMachine["Vagando"]:
+						# print("estou vagando")
+						streetPoint = ai.followRoad()
+						if streetPoint is not None:
+							velArr = ai.alignToTarget(streetPoint)
+
+						if stateMachine["AlinhandoCor"]:
+							colorPoint = ai.identifyColor(ai.target[0])
+							if colorPoint is not None:
+								stateMachine["Vagando"] = 0
+						
+						if stateMachine["ProcurandoDeposito"]:
+							# Teste mobileNet
+							# colorPoint = ai.identifyColor(ai.target[0])
+							# if colorPoint is not None:
+							# 	stateMachine["Vagando"] = 0
+							print("")
+					
+					else:
+						if stateMachine["AlinhandoCor"]:
+							# print("estou alinhando cor")
+							if not stateMachine["ReturnPointSet"]:
+								ai.setReturningPoint(ai.x, ai.y)
+								stateMachine["ReturnPointSet"] = 1
+							colorPoint = ai.identifyColor(ai.target[0])
+							if colorPoint is not None:
+								# print("Achei a cor")
+								velArr = ai.alignToTarget(colorPoint)
+								if velArr[1] == Vector3(0,0,0):
+									stateMachine["AlinhandoCor"] = 0
+									stateMachine["Avancando"] = 1
+						if stateMachine["Avancando"]:
+							if ai.detectProximity():
+								stateMachine["Avancando"] = 0
+								stateMachine["CorrigindoDistancia"] = 1
+							else: 
+								velArr = ai.fastAdvance()
+								ai.counters["FramesSemAlinhar"] += 1
+								# print(ai.counters)
+								if ai.counters["FramesSemAlinhar"] >= 7:
+									ai.counters["FramesSemAlinhar"] = 0
+									stateMachine["Avancando"] = 0
+									stateMachine["AlinhandoCor"] = 1
+						
+						if stateMachine["CorrigindoDistancia"]:
+							velArr = ai.setDistance(0.25)
+							if velArr == [Vector3(0,0,0),Vector3(0,0,0)]:
+								stateMachine["CorrigindoDistancia"] = 0
+								stateMachine["Pegando"] = 1
+
+						if stateMachine["Pegando"]:
+							# Garra
+							stateMachine["Pegando"] = 0
+							stateMachine["Voltando"] = 1
+							print("")
+						
+						if stateMachine["Voltando"]:
+							# Voltar por Odom
+							if girando == 0:
+								velArr, girando = ai.checkAngle(girando)
+							if chegou == 0:
+								velArr, chegou = ai.ateChegar(chegou)
+							print("")
+							if girando and chegou:
+								stateMachine["Voltando"] = 0
+								stateMachine["Parado"] = 1
+									
 
 
 
 
 
-				# ai.mobileNet()
-				# resultados = ai.mobileNetResults
-				# for r in resultados:
-				# 	print(r)
-			# roda_todo_frame(topico_imagem)
-			print("t0", t0)
-			if t0.nsecs == 0:
-				t0 = rospy.get_rostime()
-				print("waiting for timer")
-				continue        
-			t1 = rospy.get_rostime()
-			elapsed = (t1 - t0)
-			print("Passaram ", elapsed.secs, " segundos")
-			if elapsed.secs == 1:
-				raw_input("Manda um enter pra eu salvar a posicao")
-				ai.setReturningPoint(xOdom, yOdom)
-				# t0 = rospy.get_rostime()
-			if elapsed.secs >= 15:
-				if girando == 0:
-					velArr, girando = ai.checkAngle(girando)
+
+
+
+
+
+
+							# print(ai.frame.shape)
+						
+							
+					# 			velArr = ai.fastAdvance()
+					# 	else:
+					# 		velArr = [Vector3(0,0,0),Vector3(0,0,0.07)]
+					# else:
+					# 	velArr = ai.alignToTarget(colorPoint)
+					# 	if velArr[1] == Vector3(0,0,0):
+					# 		if not ai.detectProximity():
+					# 			velArr = ai.fastAdvance()
+					# 		elif velArr != [Vector3(0,0,0),Vector3(0,0,0)]:
+					# 			velArr = ai.setDistance(0.25)
+					# 		else:
+					# 			print("acabei")
+
+
+			
+
+
+			 	# ai.mobileNet()
+			 	# resultados = ai.mobileNetResults
+			 	# for r in resultados:
+			 	# 	print(r)
+
+
+
+			# print("t0", t0)
+			# if t0.nsecs == 0:
+			# 	t0 = rospy.get_rostime()
+			# 	print("waiting for timer")
+			# 	continue        
+			# t1 = rospy.get_rostime()
+			# elapsed = (t1 - t0)
+			# print("Passaram ", elapsed.secs, " segundos")
+			# if elapsed.secs == 1:
+			# 	raw_input("Manda um enter pra eu salvar a posicao")
+			# 	ai.setReturningPoint(xOdom, yOdom)
+			# 	# t0 = rospy.get_rostime()
+			# if elapsed.secs >= 15:
+			# 	if girando == 0:
+			# 		velArr, girando = ai.checkAngle(girando)
 				# if chegou == 0:
 				# 	print("Cheguei! WooHoo")
 				# 	velArr, chegou = ai.ateChegar(chegou)
 
-			print(ai.x, ai.y, "Estou aqui")
-			print(ai.x_0, ai.y_0, "Voltarei para ca")
+			# print(ai.x, ai.y, "Estou aqui")
+			# print(ai.x_0, ai.y_0, "Voltarei para ca")
+			
+			
+			
+			
+			
+			
 			vel = Twist(velArr[0], velArr[1])
 			velocidade_saida.publish(vel)
 			# print(velArr)
+			print(stateMachine)
+			ai.showFrame()
 			rospy.sleep(0.5)
 
 

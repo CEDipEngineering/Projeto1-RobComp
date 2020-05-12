@@ -97,24 +97,14 @@ class MoveGroupPythonIntefaceTutorial(object):
 
         gripper_name = "gripper"
         gripper_group = moveit_commander.MoveGroupCommander(gripper_name)
-        print("Methods available in move_group")
-        print(dir(move_group))
         display_trajectory_publisher = rospy.Publisher('/move_group/display_planned_path',
                                                         moveit_msgs.msg.DisplayTrajectory,
                                                         queue_size=20)
         planning_frame = move_group.get_planning_frame()
-        print("============ Planning frame: %s" % planning_frame)
-
-        planning_frame_gripper = gripper_group.get_planning_frame()
-        print("============ Planning frame for gripper: {}".format(planning_frame_gripper))    
+        planning_frame_gripper = gripper_group.get_planning_frame()  
         eef_link = move_group.get_end_effector_link()
-        print("============ End effector link: %s" % eef_link)
         eef_link_gripper = gripper_group.get_end_effector_link()
-        print("============ End effector link: %s" % eef_link_gripper)
         group_names = robot.get_group_names()
-        print("============ Available Planning Groups:", robot.get_group_names())
-        print("============ Printing robot state")
-        print(robot.get_current_state())
         self.box_name = ''
         self.robot = robot
         self.scene = scene
