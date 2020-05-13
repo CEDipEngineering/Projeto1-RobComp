@@ -23,6 +23,8 @@ from geometry_msgs.msg import Twist, Vector3, Pose, Vector3Stamped
 from AI import AI
 import visao_module
 from sensor_msgs.msg import LaserScan
+from garra_demo import *
+
 
 
 bridge = CvBridge()
@@ -165,8 +167,11 @@ if __name__=="__main__":
 			"ReturnPointSet": 0
 		}
 
+		tutorial = MoveGroupPythonIntefaceTutorial()
+		tutorial.go_to_initial_position()
+		tutorial.open_gripper()
+
 		while not rospy.is_shutdown():
-			
 			velArr = [Vector3(0,0,0),Vector3(0,0,0)]
 
 			# print(ai.detectProximity())
