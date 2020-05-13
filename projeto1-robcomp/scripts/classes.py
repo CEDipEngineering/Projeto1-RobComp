@@ -28,8 +28,9 @@ class Line():
         y2 = self.point2.y
         y3 = line.point1.y
         y4 = line.point2.y
-        out_x = int(round(((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4))/((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))))
-        out_y = int(round(((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4))/((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))))
+        den = ((x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4))
+        out_x = int(round(((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4))/den))
+        out_y = int(round(((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4))/den))
         out = Point(out_x, out_y)
         return out
     

@@ -33,6 +33,7 @@ class AI:
         self.x   = None
         self.y   = None
         self.angulo = None
+        self.angulo_0 = None
         self.counters = {
             "FramesSemAlinhar": 0
         }
@@ -269,17 +270,16 @@ class AI:
 
         return media, maior_contorno_area
     
-    def checkAngle(self,found):
+    def pointToReturn(self):
         angulocorreto = np.arctan((self.y-self.y_0/self.x-self.x_0))*180/np.pi
         kappa = [Vector3(0,0,0), Vector3(0,0,0)]
 
-        print(angulocorreto, self.angulo, "alvo; atual")
-        
+        print("alvo: {0}; atual: {1}".format(angulocorreto, self.angulo))
 
         # if dx > 0 (esquerda), gire para um lado, para direita, gire para outro
         if abs(angulocorreto-self.angulo) >= 10:
             kappa = [Vector3(0,0,0), Vector3(0,0,0.4)]
-            return kappa, found
+            return kappa
         
         
         # if self.x==self.x_0 and self.y>self.y_0:
@@ -335,19 +335,19 @@ class AI:
         #     found = 1
         #     return kappa, found
         
-        return kappa, found
+        return kappa
 
-    def ateChegar(self, chegou):
+    def goReturningPoint(self):
         kappa = [Vector3(0,0,0), Vector3(0,0,0)]
         if ((self.x>(self.x_0 + 0.01) or self.x<(self.x_0-0.01)) and ((self.y>self.y_0 + 0.01) or self.y<(self.y_0-0.01))) == True:
             kappa = [Vector3(0.1,0,0), Vector3(0,0,0)]
-            return kappa, chegou
-        chegou = 1
-        return kappa, chegou
+            return kappa
+        return kappa
 
-    def setReturningPoint(self, x_return, y_return):
-        self.x_0 = x_return
-        self.y_0 = y_return
+    def setReturningPoint(self):
+        self.x_0 = self.x
+        self.y_0 = self.y
+        self.angle_0 = self.angulo
 
     def CurrPos(self, x_instant, y_instant, ang_instant):
         self.x = x_instant
@@ -365,15 +365,36 @@ class AI:
     def setDistance(self, target):
         if self.lydar is not None:
             velArr = [Vector3(0,0,0),Vector3(0,0,0)]
-            if self.lydar[0] >= target + 0.03:
-                velArr = [Vector3(0.01,0,0),Vector3(0,0,0)]
-            elif self.lydar[0] <= target - 0.03:
-                velArr = [Vector3(-0.01,0,0),Vector3(0,0,0)]                 
+            # First align to smallest value in 30 degree arc; 
+            arc = range(-15,15)
+            arr = [self.lydar[i] for i in arc]
+            targetIndex = self._getIndexOfFirstAppearence(arr, min(arr))
+            if targetIndex > 17:
+                velArr = [Vector3(0,0,0), Vector3(0,0,0.1)]
+            elif targetIndex < 15: 
+                velArr = [Vector3(0,0,0), Vector3(0,0,-0.1)]
+            else:
+                # Then adjust distance
+                if self.lydar[0] >= target + 0.03:
+                    velArr = [Vector3(0.01,0,0),Vector3(0,0,0)]
+                elif self.lydar[0] <= target - 0.03:
+                    velArr = [Vector3(-0.01,0,0),Vector3(0,0,0)]                 
+            
             return velArr
         return
 
     def stop(self):
         return [Vector3(0,0,0), Vector3(0,0,0)]
 
-
+    def resetAngle(self):
+        if abs(self.angulo_0-self.angulo) >= 10:
+            kappa = [Vector3(0,0,0), Vector3(0,0,0.4)]
+            return kappa
+        else:
+            return self.stop()
+    
+    def _getIndexOfFirstAppearence(self, arr, num):
+        for i,e in enumerate(arr):
+            if e == num:
+                return i
 

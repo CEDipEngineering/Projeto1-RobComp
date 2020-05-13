@@ -45,6 +45,7 @@ def recebe_odometria(data):
 def gira():
     kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
     return kappa
+    
 def checkAngle():
     angulocorreto = np.arctan((y/x))*180/np.pi
     kappa = [Vector3(0,0,0), Vector3(0,0,0)]

@@ -202,16 +202,17 @@ if __name__=="__main__":
 						
 						if stateMachine["ProcurandoDeposito"]:
 							# Teste mobileNet
-							# colorPoint = ai.identifyColor(ai.target[0])
-							# if colorPoint is not None:
-							# 	stateMachine["Vagando"] = 0
+							# ai.mobileNet()
+							# resultados = ai.mobileNetResults
+							# for r in resultados:
+							# 	print(r)
 							print("")
 					
 					else:
 						if stateMachine["AlinhandoCor"]:
 							# print("estou alinhando cor")
 							if not stateMachine["ReturnPointSet"]:
-								ai.setReturningPoint(ai.x, ai.y)
+								ai.setReturningPoint()
 								stateMachine["ReturnPointSet"] = 1
 							colorPoint = ai.identifyColor(ai.target[0])
 							if colorPoint is not None:
@@ -228,45 +229,40 @@ if __name__=="__main__":
 								velArr = ai.fastAdvance()
 								ai.counters["FramesSemAlinhar"] += 1
 								# print(ai.counters)
-								if ai.counters["FramesSemAlinhar"] >= 7:
+								if ai.counters["FramesSemAlinhar"] >= 10:
 									ai.counters["FramesSemAlinhar"] = 0
 									stateMachine["Avancando"] = 0
 									stateMachine["AlinhandoCor"] = 1
 						
 						if stateMachine["CorrigindoDistancia"]:
-							velArr = ai.setDistance(0.25)
+							velArr = ai.setDistance(0.28)
 							if velArr == [Vector3(0,0,0),Vector3(0,0,0)]:
 								stateMachine["CorrigindoDistancia"] = 0
 								stateMachine["Pegando"] = 1
 
 						if stateMachine["Pegando"]:
 							# Garra
+
+
+
+
+
+							# When done:
 							stateMachine["Pegando"] = 0
 							stateMachine["Voltando"] = 1
 							print("")
 						
 						if stateMachine["Voltando"]:
 							# Voltar por Odom
-							if girando == 0:
-								velArr, girando = ai.checkAngle(girando)
-							if chegou == 0:
-								velArr, chegou = ai.ateChegar(chegou)
-							print("")
-							if girando and chegou:
-								stateMachine["Voltando"] = 0
-								stateMachine["Parado"] = 1
+							velArr = ai.pointToReturn()
+							if velArr[1] == Vector3(0,0,0):
+								velArr = ai.goReturningPoint()
+								if velArr == ai.stop():
+									velArr = ai.resetAngle()
+									if velArr == ai.stop():
+										stateMachine["Voltando"] = 0
+										stateMachine["ProcurandoDeposito"] = 1
 									
-
-
-
-
-
-
-
-
-
-
-
 							# print(ai.frame.shape)
 						
 							
@@ -324,7 +320,7 @@ if __name__=="__main__":
 			vel = Twist(velArr[0], velArr[1])
 			velocidade_saida.publish(vel)
 			# print(velArr)
-			print(stateMachine)
+			[print("{0}: {1}".format(k,v)) for k,v in stateMachine.items()]
 			ai.showFrame()
 			rospy.sleep(0.5)
 
