@@ -26,7 +26,6 @@ from sensor_msgs.msg import LaserScan
 from garra_demo import *
 
 
-
 bridge = CvBridge()
 ai = AI()
 
@@ -166,6 +165,12 @@ if __name__=="__main__":
 			"CorrigindoDistancia": 0,
 			"ReturnPointSet": 0
 		}
+		tutorial = MoveGroupPythonIntefaceTutorial()
+		tutorial.open_gripper()
+		tutorial.go_to_initial_position()
+		
+
+
 
 		tutorial = MoveGroupPythonIntefaceTutorial()
 		tutorial.go_to_initial_position()
@@ -240,14 +245,14 @@ if __name__=="__main__":
 									stateMachine["AlinhandoCor"] = 1
 						
 						if stateMachine["CorrigindoDistancia"]:
-							velArr = ai.setDistance(0.28)
+							velArr = ai.setDistance(0.20)
 							if velArr == [Vector3(0,0,0),Vector3(0,0,0)]:
 								stateMachine["CorrigindoDistancia"] = 0
 								stateMachine["Pegando"] = 1
 
 						if stateMachine["Pegando"]:
 							# Garra
-
+							tutorial.close_gripper()
 
 
 

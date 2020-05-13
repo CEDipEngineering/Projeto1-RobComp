@@ -271,7 +271,7 @@ class AI:
         return media, maior_contorno_area
     
     def pointToReturn(self):
-        angulocorreto = np.arctan((self.y-self.y_0/self.x-self.x_0))*180/np.pi
+        angulocorreto = np.arctan(((self.y-self.y_0)/(self.x-self.x_0)))*180/np.pi
         kappa = [Vector3(0,0,0), Vector3(0,0,0)]
 
         print("alvo: {0}; atual: {1}".format(angulocorreto, self.angulo))
