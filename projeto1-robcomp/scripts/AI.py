@@ -23,8 +23,8 @@ class AI:
         self.__acceptableDelay__ = 1.5E9
         self.mobileNetResults = None
         self.modifiedFrame = None
-        self.lookDownMask = cv2.imread("Projeto1-RobComp/projeto1-robcomp/scripts/mask.png")
-        self.lookDownMask = cv2.cvtColor(self.lookDownMask, cv2.COLOR_BGR2GRAY)
+        #self.lookDownMask = cv2.imread("Projeto1-RobComp/projeto1-robcomp/scripts/mask.png")
+        #self.lookDownMask = cv2.cvtColor(self.lookDownMask, cv2.COLOR_BGR2GRAY)
         self.target = []
         # self.lookDownMask = cv2.imread("Projeto1-RobComp/projeto1-robcomp/scripts/mask.png")
         # self.lookDownMask = cv2.cvtColor(self.lookDownMask, cv2.COLOR_BGR2GRAY)
@@ -271,7 +271,7 @@ class AI:
         return media, maior_contorno_area
     
     def pointToReturn(self):
-        angulocorreto = np.arctan((self.y-self.y_0/self.x-self.x_0))*180/np.pi
+        angulocorreto = np.arctan(((self.y-self.y_0)/(self.x-self.x_0)))*180/np.pi
         kappa = [Vector3(0,0,0), Vector3(0,0,0)]
 
         print("alvo: {0}; atual: {1}".format(angulocorreto, self.angulo))
