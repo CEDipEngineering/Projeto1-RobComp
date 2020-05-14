@@ -277,7 +277,7 @@ class AI:
         print("alvo: {0}; atual: {1}".format(angulocorreto, self.angulo))
 
         # if dx > 0 (esquerda), gire para um lado, para direita, gire para outro
-        if abs(angulocorreto-self.angulo) >= 10:
+        if abs(angulocorreto-self.angulo) >= 5:
             kappa = [Vector3(0,0,0), Vector3(0,0,0.4)]
             return kappa
         
@@ -339,7 +339,7 @@ class AI:
 
     def goReturningPoint(self):
         kappa = [Vector3(0,0,0), Vector3(0,0,0)]
-        if ((self.x>(self.x_0 + 0.01) or self.x<(self.x_0-0.01)) and ((self.y>self.y_0 + 0.01) or self.y<(self.y_0-0.01))) == True:
+        if ((self.x>(self.x_0 + 0.05) or self.x<(self.x_0-0.05)) and ((self.y>self.y_0 + 0.05) or self.y<(self.y_0-0.05))) == True:
             kappa = [Vector3(0.1,0,0), Vector3(0,0,0)]
             return kappa
         return kappa
