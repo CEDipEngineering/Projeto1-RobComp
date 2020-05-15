@@ -271,15 +271,16 @@ class AI:
         return media, maior_contorno_area
     
     def pointToReturn(self):
-        angulocorreto = np.arctan(((self.y-self.y_0)/(self.x-self.x_0)))*180/np.pi
+        angulocorreto = np.arctan(-((self.y-self.y_0)/(self.x-self.x_0)))*180/np.pi
         kappa = [Vector3(0,0,0), Vector3(0,0,0)]
 
         print("alvo: {0}; atual: {1}".format(angulocorreto, self.angulo))
 
         # if dx > 0 (esquerda), gire para um lado, para direita, gire para outro
         if abs(angulocorreto-self.angulo) >= 5:
-            kappa = [Vector3(0,0,0), Vector3(0,0,0.4)]
+            kappa = [Vector3(0,0,0), Vector3(0,0,-0.4)]
             return kappa
+        return kappa
         
         
         # if self.x==self.x_0 and self.y>self.y_0:
@@ -347,7 +348,7 @@ class AI:
     def setReturningPoint(self):
         self.x_0 = self.x
         self.y_0 = self.y
-        self.angle_0 = self.angulo
+        self.angulo_0 = self.angulo
 
     def CurrPos(self, x_instant, y_instant, ang_instant):
         self.x = x_instant

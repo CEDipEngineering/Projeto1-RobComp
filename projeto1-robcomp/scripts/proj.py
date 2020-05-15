@@ -156,7 +156,7 @@ if __name__=="__main__":
 
 		stateMachine = {
 			"Vagando": 1,
-			"AlinhandoCor": 1,
+			"AlinhandoCor": 0,
 			"Avancando": 0,
 			"Parado": 0,
 			"Pegando": 0,
@@ -204,6 +204,17 @@ if __name__=="__main__":
 						streetPoint = ai.followRoad()
 						if streetPoint is not None:
 							velArr = ai.alignToTarget(streetPoint)
+							stateMachine["Avancando"] = 1
+							if stateMachine["Avancando"]:
+								velArr = ai.slowAdvance()
+								ai.counters["FramesSemAlinhar"] += 1
+								# print(ai.counters)
+								if ai.counters["FramesSemAlinhar"] >= 2:
+									ai.counters["FramesSemAlinhar"] = 0
+									stateMachine["Avancando"] = 0
+									velArr = ai.alignToTarget(streetPoint)
+
+							
 
 						if stateMachine["AlinhandoCor"]:
 							colorPoint = ai.identifyColor(ai.target[0])
@@ -245,7 +256,7 @@ if __name__=="__main__":
 									stateMachine["AlinhandoCor"] = 1
 						
 						if stateMachine["CorrigindoDistancia"]:
-							velArr = ai.setDistance(0.17)
+							velArr = ai.setDistance(0.15)
 							if velArr == [Vector3(0,0,0),Vector3(0,0,0)]:
 								stateMachine["CorrigindoDistancia"] = 0
 								stateMachine["Pegando"] = 1
