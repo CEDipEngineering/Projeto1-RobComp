@@ -201,6 +201,7 @@ if __name__=="__main__":
 						streetPoint = ai.followRoad()
 						if streetPoint is not None:
 							velArr = ai.alignToTarget(streetPoint)
+							
 
 						if stateMachine["AlinhandoCor"]:
 							colorPoint = ai.identifyColor(ai.target[0])
