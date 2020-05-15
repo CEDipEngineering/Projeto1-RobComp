@@ -23,11 +23,9 @@ class AI:
         self.__acceptableDelay__ = 1.5E9
         self.mobileNetResults = None
         self.modifiedFrame = None
-        #self.lookDownMask = cv2.imread("Projeto1-RobComp/projeto1-robcomp/scripts/mask.png")
-        #self.lookDownMask = cv2.cvtColor(self.lookDownMask, cv2.COLOR_BGR2GRAY)
+        self.lookDownMask = cv2.imread("Projeto1-RobComp/projeto1-robcomp/scripts/mask.png")
+        self.lookDownMask = cv2.cvtColor(self.lookDownMask, cv2.COLOR_BGR2GRAY)
         self.target = []
-        # self.lookDownMask = cv2.imread("Projeto1-RobComp/projeto1-robcomp/scripts/mask.png")
-        # self.lookDownMask = cv2.cvtColor(self.lookDownMask, cv2.COLOR_BGR2GRAY)
         self.x_0 = None
         self.y_0 = None
         self.x   = None
@@ -149,11 +147,8 @@ class AI:
         velArr = [Vector3(0,0,0), Vector3(0,0,0.1)]
         pass
 
-    def centralizeCamera(self):
-        pass
-
     def fastAdvance(self):
-        velArr = [Vector3(0.17,0,0), Vector3(0,0,0)]
+        velArr = [Vector3(0.15,0,0), Vector3(0,0,0)]
         return velArr
 
     def slowAdvance(self):
@@ -182,6 +177,21 @@ class AI:
             # return the edged image
             return edged
     
+    def identifyDeposit(self):
+        targetClass = self.target[2]
+        if targetClass in np.array(self.mobileNetResults).flatten():
+            index = self._getIndexOfFirstAppearence(np.array(self.mobileNetResults).flatten(), targetClass)
+            index = index//4
+            targetTuple = self.mobileNetResults[index]
+            # ("Classe", Prob, pt1, pt2)
+            c, p, pt1, pt2 = targetTuple
+            pt1 = Point(pt1[0], pt1[1])
+            pt2 = Point(pt2[0], pt2[1])
+            outPt = Point((pt1.x + pt2.x)/2, (pt1.y + pt2.y)/2)
+            return outPt
+
+        return
+
     def treatForLines(self):
         # print("Chamou treatForLines")
         if self.checkFrame():
@@ -271,75 +281,22 @@ class AI:
         return media, maior_contorno_area
     
     def pointToReturn(self):
-        angulocorreto = np.arctan(((self.y-self.y_0)/(self.x-self.x_0)))*180/np.pi
+        angulocorreto = np.arctan(((self.y-self.y_0)/(self.x-self.x_0)))*180/np.pi - 180
         kappa = [Vector3(0,0,0), Vector3(0,0,0)]
 
         print("alvo: {0}; atual: {1}".format(angulocorreto, self.angulo))
 
         # if dx > 0 (esquerda), gire para um lado, para direita, gire para outro
         if abs(angulocorreto-self.angulo) >= 5:
-            kappa = [Vector3(0,0,0), Vector3(0,0,0.4)]
+            kappa = [Vector3(0,0,0), Vector3(0,0,-0.4)]
             return kappa
-        
-        
-        # if self.x==self.x_0 and self.y>self.y_0:
-        #     angulocorreto = -90
-        #     if (self.angulo < (angulocorreto+0.05) and self.angulo > (angulocorreto-0.05)) == False:
-        #         kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
-        #         return kappa, found
-        #     found = 1
-        #     return kappa, found
-        # elif self.x==self.x_0 and self.y<self.y_0:
-        #     angulocorreto = 90 
-        #     if (self.angulo < (angulocorreto+0.05) and self.angulo > (angulocorreto-0.05)) == False:
-        #         kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
-        #         return kappa, found
-        #     found = 1
-        #     return kappa, found
-        # elif self.y==self.y_0 and self.x>self.x_0:
-        #     angulocorreto = -180 
-        #     if (self.angulo < (angulocorreto+0.05) and self.angulo > (angulocorreto-0.05)) == False:
-        #         kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
-        #         return kappa, found
-        #     found = 1
-        #     return kappa, found
-        # elif self.y==self.y_0 and self.x<self.x_0:
-        #     angulocorreto = 0
-        #     if (self.angulo < (angulocorreto+0.05) and self.angulo > (angulocorreto-0.05)) == False:
-        #         kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
-        #         return kappa, found
-        #     found = 1
-        #     return kappa, found
-        # elif self.x>self.x_0 and self.y>self.y_0:
-        #     if (self.angulo < (angulocorreto+0.05-180) and self.angulo > (angulocorreto-0.05-180)) == False:
-        #         kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
-        #         return kappa, found
-        #     found = 1
-        #     return kappa, found
-        # elif self.x<self.x_0 and self.y<self.y_0:
-        #     if (self.angulo < (angulocorreto+0.05) and self.angulo > (angulocorreto-0.05)) == False:
-        #         kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
-        #         return kappa, found
-        #     found = 1
-        #     return kappa, found
-        # elif self.x>self.x_0 and self.y<self.y_0:
-        #     if (self.angulo < (angulocorreto+0.05+180) and self.angulo > (angulocorreto-0.05+180)) == False:
-        #         kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
-        #         return kappa, found
-        #     found = 1
-        #     return kappa, found
-        # elif self.x<self.x_0 and self.y>self.y_0:
-        #     if (self.angulo < (angulocorreto+0.05) and self.angulo > (angulocorreto-0.05)) == False:
-        #         kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
-        #         return kappa, found
-        #     found = 1
-        #     return kappa, found
-        
         return kappa
 
     def goReturningPoint(self):
         kappa = [Vector3(0,0,0), Vector3(0,0,0)]
-        if ((self.x>(self.x_0 + 0.05) or self.x<(self.x_0-0.05)) and ((self.y>self.y_0 + 0.05) or self.y<(self.y_0-0.05))) == True:
+        print("Estou em: ({0},{1})".format(self.x, self.y))
+        print("Indo para: ({0},{1})".format(self.x_0, self.y_0))
+        if abs(self.x-self.x_0)>0.3 and abs(self.y-self.y_0)>0.3:
             kappa = [Vector3(0.1,0,0), Vector3(0,0,0)]
             return kappa
         return kappa
@@ -347,7 +304,7 @@ class AI:
     def setReturningPoint(self):
         self.x_0 = self.x
         self.y_0 = self.y
-        self.angle_0 = self.angulo
+        self.angulo_0 = self.angulo
 
     def CurrPos(self, x_instant, y_instant, ang_instant):
         self.x = x_instant
@@ -357,7 +314,7 @@ class AI:
     def detectProximity(self):
         arc = range(-15,15)
         if self.lydar is not None:
-            close = [x <= 0.35 for x in self.lydar]
+            close = [x <= 0.40 for x in self.lydar]
             print([close[i] for i in arc])
             return np.any([close[i] for i in arc])
         return
@@ -369,9 +326,9 @@ class AI:
             arc = range(-15,15)
             arr = [self.lydar[i] for i in arc]
             targetIndex = self._getIndexOfFirstAppearence(arr, min(arr))
-            if targetIndex > 17:
+            if targetIndex > 18:
                 velArr = [Vector3(0,0,0), Vector3(0,0,0.1)]
-            elif targetIndex < 15: 
+            elif targetIndex < 14: 
                 velArr = [Vector3(0,0,0), Vector3(0,0,-0.1)]
             else:
                 # Then adjust distance

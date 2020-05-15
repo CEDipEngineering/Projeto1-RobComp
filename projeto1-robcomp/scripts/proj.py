@@ -156,21 +156,18 @@ if __name__=="__main__":
 
 		stateMachine = {
 			"Vagando": 1,
-			"AlinhandoCor": 1,
+			"AlinhandoCor": 0,
 			"Avancando": 0,
 			"Parado": 0,
 			"Pegando": 0,
 			"Voltando": 0,
-			"ProcurandoDeposito": 0,
+			"AlinhandoDeposito": 1,
 			"CorrigindoDistancia": 0,
-			"ReturnPointSet": 0
+			"ReturnPointSet": 0,
+			"RetomandoAngulo": 0
 		}
-		tutorial = MoveGroupPythonIntefaceTutorial()
-		tutorial.open_gripper()
-		tutorial.go_to_initial_position()
+
 		
-
-
 
 		tutorial = MoveGroupPythonIntefaceTutorial()
 		tutorial.go_to_initial_position()
@@ -210,13 +207,11 @@ if __name__=="__main__":
 							if colorPoint is not None:
 								stateMachine["Vagando"] = 0
 						
-						if stateMachine["ProcurandoDeposito"]:
-							# Teste mobileNet
-							# ai.mobileNet()
-							# resultados = ai.mobileNetResults
-							# for r in resultados:
-							# 	print(r)
-							print("")
+						if stateMachine["AlinhandoDeposito"]:
+							depositPoint = ai.identifyDeposit()
+							if depositPoint is not None:
+								stateMachine["Vagando"] = 0
+							
 					
 					else:
 						if stateMachine["AlinhandoCor"]:
@@ -245,7 +240,7 @@ if __name__=="__main__":
 									stateMachine["AlinhandoCor"] = 1
 						
 						if stateMachine["CorrigindoDistancia"]:
-							velArr = ai.setDistance(0.17)
+							velArr = ai.setDistance(0.18)
 							if velArr == [Vector3(0,0,0),Vector3(0,0,0)]:
 								stateMachine["CorrigindoDistancia"] = 0
 								stateMachine["Pegando"] = 1
@@ -268,11 +263,38 @@ if __name__=="__main__":
 							if velArr[1] == Vector3(0,0,0):
 								velArr = ai.goReturningPoint()
 								if velArr == ai.stop():
-									velArr = ai.resetAngle()
-									if velArr == ai.stop():
-										stateMachine["Voltando"] = 0
-										stateMachine["ProcurandoDeposito"] = 1
-									
+									stateMachine["Voltando"] = 0
+									stateMachine["RetomandoAngulo"] = 1
+						
+						if stateMachine["RetomandoAngulo"]:
+							velArr = ai.resetAngle()
+							if velArr == ai.stop():
+								stateMachine["RetomandoAngulo"] = 0
+								stateMachine["AlinhandoDeposito"] = 1
+								stateMachine["Vagando"] = 1
+								# stateMachine["ReturnPointSet"] = 0
+
+
+
+						if stateMachine["AlinhandoDeposito"]:
+							# print("estou alinhando deposit")
+
+							# Nao vamos voltar
+							# if not stateMachine["ReturnPointSet"]:
+							# 	ai.setReturningPoint()
+							# 	stateMachine["ReturnPointSet"] = 1
+							
+							depositPoint = ai.identifyDeposit()
+							if depositPoint is not None:
+								# print("Achei a cor")
+								velArr = ai.alignToTarget(depositPoint)
+								if velArr[1] == Vector3(0,0,0):
+									stateMachine["AlinhandoDeposito"] = 0
+									stateMachine["Avancando"] = 1
+
+
+
+
 							# print(ai.frame.shape)
 						
 							
