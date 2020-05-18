@@ -179,17 +179,19 @@ class AI:
     
     def identifyDeposit(self):
         targetClass = self.target[2]
-        if targetClass in np.array(self.mobileNetResults).flatten():
-            index = self._getIndexOfFirstAppearence(np.array(self.mobileNetResults).flatten(), targetClass)
-            index = index//4
-            targetTuple = self.mobileNetResults[index]
-            # ("Classe", Prob, pt1, pt2)
-            c, p, pt1, pt2 = targetTuple
-            pt1 = Point(pt1[0], pt1[1])
-            pt2 = Point(pt2[0], pt2[1])
-            outPt = Point((pt1.x + pt2.x)/2, (pt1.y + pt2.y)/2)
-            return outPt
+        # print(self.mobileNetResults)
+        targetTuple = None
 
+        for i,e in enumerate(self.mobileNetResults):
+            cv2.rectangle(self.modifiedFrame, e[2], e[3], (0,0,0),3)
+            if e[0] == targetClass:
+                targetTuple = e
+                c, p, pt1, pt2 = targetTuple
+                pt1 = Point(pt1[0], pt1[1])
+                pt2 = Point(pt2[0], pt2[1])
+                outPt = Point((pt1.x + pt2.x)/2, (pt1.y + pt2.y)/2)
+                return outPt
+        
         return
 
     def treatForLines(self):
@@ -200,7 +202,7 @@ class AI:
             temp = cv2.cvtColor(self.frame, cv2.COLOR_BGR2HSV)
             mask = cv2.inRange(cv2.GaussianBlur(temp.copy(),(3,3),0),np.array([0,0,200]),np.array([180,10,255]))
             # print(str(mask.shape) + " : " + str(self.lookDownMask.shape))
-            # mask = cv2.bitwise_and(mask, self.lookDownMask)
+            mask = cv2.bitwise_and(mask, self.lookDownMask)
             morphMask = cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((3, 3)))
             contornos, arvore = cv2.findContours(morphMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             frame_out = cv2.drawContours(morphMask, contornos, -1, [0, 0, 255], 3)
@@ -229,6 +231,7 @@ class AI:
             try:
                 _a_, _b_, resultados =  visao_module.processa(self.frame, showFrame=False)        
                 self.mobileNetResults = resultados
+                print(resultados)
                 return resultados
             except CvBridgeError as e:
                 print('ex', e)
@@ -281,7 +284,16 @@ class AI:
         return media, maior_contorno_area
     
     def pointToReturn(self):
-        angulocorreto = np.arctan(((self.y-self.y_0)/(self.x-self.x_0)))*180/np.pi - 180
+        angulocorreto = np.arctan(((self.y-self.y_0)/(self.x-self.x_0)))*180/np.pi
+
+
+        #Magnifico
+        if abs(angulocorreto-180)>180:
+            angulocorreto += 180
+        else:
+            angulocorreto -= 180
+
+
         kappa = [Vector3(0,0,0), Vector3(0,0,0)]
 
         print("alvo: {0}; atual: {1}".format(angulocorreto, self.angulo))
@@ -296,7 +308,7 @@ class AI:
         kappa = [Vector3(0,0,0), Vector3(0,0,0)]
         print("Estou em: ({0},{1})".format(self.x, self.y))
         print("Indo para: ({0},{1})".format(self.x_0, self.y_0))
-        if abs(self.x-self.x_0)>0.3 and abs(self.y-self.y_0)>0.3:
+        if abs(self.x-self.x_0)>0.3 or abs(self.y-self.y_0)>0.3:
             kappa = [Vector3(0.1,0,0), Vector3(0,0,0)]
             return kappa
         return kappa
@@ -315,7 +327,7 @@ class AI:
         arc = range(-15,15)
         if self.lydar is not None:
             close = [x <= 0.40 for x in self.lydar]
-            print([close[i] for i in arc])
+            # print([close[i] for i in arc])
             return np.any([close[i] for i in arc])
         return
 
@@ -354,4 +366,5 @@ class AI:
         for i,e in enumerate(arr):
             if e == num:
                 return i
+        return
 

@@ -147,7 +147,7 @@ if __name__=="__main__":
 
 	try:
 
-		ai.target = ['blue', 0 , 'dog']
+		ai.target = ['magenta', 0 , 'cat']
 		#goal1 = ["blue", 11, "cat"]
 		#goal2 = ["green", 21, "dog"]
 		#goal3 = ["magenta", 12, "bike"]
@@ -156,13 +156,14 @@ if __name__=="__main__":
 
 		stateMachine = {
 			"Vagando": 1,
-			"AlinhandoCor": 0,
-			"Avancando": 0,
+			"AlinhandoCor": 1,
+			"AvancandoCor": 0,
 			"Parado": 0,
 			"Pegando": 0,
 			"Voltando": 0,
-			"AlinhandoDeposito": 1,
+			"AlinhandoDeposito": 0,
 			"CorrigindoDistancia": 0,
+			"AvancandoDeposito":0,
 			"ReturnPointSet": 0,
 			"RetomandoAngulo": 0
 		}
@@ -201,7 +202,8 @@ if __name__=="__main__":
 						streetPoint = ai.followRoad()
 						if streetPoint is not None:
 							velArr = ai.alignToTarget(streetPoint)
-							
+							if velArr[1] == Vector3(0,0,0):
+								velArr = ai.fastAdvance()
 
 						if stateMachine["AlinhandoCor"]:
 							colorPoint = ai.identifyColor(ai.target[0])
@@ -209,6 +211,7 @@ if __name__=="__main__":
 								stateMachine["Vagando"] = 0
 						
 						if stateMachine["AlinhandoDeposito"]:
+							ai.mobileNet()
 							depositPoint = ai.identifyDeposit()
 							if depositPoint is not None:
 								stateMachine["Vagando"] = 0
@@ -226,10 +229,10 @@ if __name__=="__main__":
 								velArr = ai.alignToTarget(colorPoint)
 								if velArr[1] == Vector3(0,0,0):
 									stateMachine["AlinhandoCor"] = 0
-									stateMachine["Avancando"] = 1
-						if stateMachine["Avancando"]:
+									stateMachine["AvancandoCor"] = 1
+						if stateMachine["AvancandoCor"]:
 							if ai.detectProximity():
-								stateMachine["Avancando"] = 0
+								stateMachine["AvancandoCor"] = 0
 								stateMachine["CorrigindoDistancia"] = 1
 							else: 
 								velArr = ai.fastAdvance()
@@ -237,11 +240,20 @@ if __name__=="__main__":
 								# print(ai.counters)
 								if ai.counters["FramesSemAlinhar"] >= 10:
 									ai.counters["FramesSemAlinhar"] = 0
-									stateMachine["Avancando"] = 0
+									stateMachine["AvancandoCor"] = 0
 									stateMachine["AlinhandoCor"] = 1
 						
+
+						if stateMachine["AvancandoDeposito"]:
+							if ai.detectProximity():
+								stateMachine["AvancandoDeposito"] = 0
+								tutorial.open_gripper()
+							else: 
+								velArr = ai.fastAdvance()
+									
+						
 						if stateMachine["CorrigindoDistancia"]:
-							velArr = ai.setDistance(0.18)
+							velArr = ai.setDistance(0.16)
 							if velArr == [Vector3(0,0,0),Vector3(0,0,0)]:
 								stateMachine["CorrigindoDistancia"] = 0
 								stateMachine["Pegando"] = 1
@@ -284,14 +296,14 @@ if __name__=="__main__":
 							# if not stateMachine["ReturnPointSet"]:
 							# 	ai.setReturningPoint()
 							# 	stateMachine["ReturnPointSet"] = 1
-							
+							ai.mobileNet()
 							depositPoint = ai.identifyDeposit()
 							if depositPoint is not None:
 								# print("Achei a cor")
 								velArr = ai.alignToTarget(depositPoint)
 								if velArr[1] == Vector3(0,0,0):
 									stateMachine["AlinhandoDeposito"] = 0
-									stateMachine["Avancando"] = 1
+									stateMachine["AvancandoDeposito"] = 1
 
 
 
@@ -319,41 +331,12 @@ if __name__=="__main__":
 			 	# ai.mobileNet()
 			 	# resultados = ai.mobileNetResults
 			 	# for r in resultados:
-			 	# 	print(r)
-
-
-
-			# print("t0", t0)
-			# if t0.nsecs == 0:
-			# 	t0 = rospy.get_rostime()
-			# 	print("waiting for timer")
-			# 	continue        
-			# t1 = rospy.get_rostime()
-			# elapsed = (t1 - t0)
-			# print("Passaram ", elapsed.secs, " segundos")
-			# if elapsed.secs == 1:
-			# 	raw_input("Manda um enter pra eu salvar a posicao")
-			# 	ai.setReturningPoint(xOdom, yOdom)
-			# 	# t0 = rospy.get_rostime()
-			# if elapsed.secs >= 15:
-			# 	if girando == 0:
-			# 		velArr, girando = ai.checkAngle(girando)
-				# if chegou == 0:
-				# 	print("Cheguei! WooHoo")
-				# 	velArr, chegou = ai.ateChegar(chegou)
-
-			# print(ai.x, ai.y, "Estou aqui")
-			# print(ai.x_0, ai.y_0, "Voltarei para ca")
-			
-			
-			
-			
-			
+			 	# 	print(r)			
 			
 			vel = Twist(velArr[0], velArr[1])
 			velocidade_saida.publish(vel)
 			# print(velArr)
-			[print("{0}: {1}".format(k,v)) for k,v in stateMachine.items()]
+			# [print("{0}: {1}".format(k,v)) for k,v in stateMachine.items()]
 			ai.showFrame()
 			rospy.sleep(0.5)
 
