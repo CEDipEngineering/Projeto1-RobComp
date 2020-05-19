@@ -24,8 +24,8 @@ class AI:
         self.__acceptableDelay__ = 1.5E9
         self.mobileNetResults = None
         self.modifiedFrame = None
-        self.lookDownMask = cv2.imread("Projeto1-RobComp/projeto1-robcomp/scripts/mask.png")
-        self.lookDownMask = cv2.cvtColor(self.lookDownMask, cv2.COLOR_BGR2GRAY)
+        #self.lookDownMask = cv2.imread("Projeto1-RobComp/projeto1-robcomp/scripts/mask.png")
+        #self.lookDownMask = cv2.cvtColor(self.lookDownMask, cv2.COLOR_BGR2GRAY)
         self.target = []
         self.x_0 = None
         self.y_0 = None
@@ -82,14 +82,17 @@ class AI:
                 for line in lines:
                     x1, y1, x2, y2 = line[0]
                     pt1 = Point(x1,y1)
+                    print(pt1.x, pt1.y)
                     pt2 = Point(x2,y2)
+                    print(pt2.x, pt2.y)
                     lin = Line(pt1,pt2)
+                    print(lin.m)
                     # cv2.line(self.modifiedFrame, pt1.getTuple(), pt2.getTuple(),(255,0,0),2)
                     # print("m = " + str(lin.m))
-                    if lin.m == -1:
+                    if lin.m <= -0.2:
                         self.lista_goodLeft.pop(0)
                         self.lista_goodLeft.append(lin)
-                    elif lin.m == 0:
+                    elif lin.m >= 0.2:
                         self.lista_goodRight.pop(0)
                         self.lista_goodRight.append(lin)
 
@@ -162,7 +165,7 @@ class AI:
         return velArr
 
     def slowAdvance(self):
-        velArr = [Vector3(0.08,0,0), Vector3(0,0,0)]
+        velArr = [Vector3(0.04,0,0), Vector3(0,0,0)]
         return velArr
 
     def calculateMeanLine(self, linhas):
@@ -212,7 +215,7 @@ class AI:
             temp = cv2.cvtColor(self.frame, cv2.COLOR_BGR2HSV)
             mask = cv2.inRange(cv2.GaussianBlur(temp.copy(),(3,3),0),np.array([0,0,200]),np.array([180,10,255]))
             # print(str(mask.shape) + " : " + str(self.lookDownMask.shape))
-            mask = cv2.bitwise_and(mask, self.lookDownMask)
+            #mask = cv2.bitwise_and(mask, self.lookDownMask)
             morphMask = cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((3, 3)))
             contornos, arvore = cv2.findContours(morphMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             frame_out = cv2.drawContours(morphMask, contornos, -1, [0, 0, 255], 3)
@@ -230,8 +233,9 @@ class AI:
         return
 
     def showMask(self):
-        cv2.imshow('mask' , self.treatForLines())
-        cv2.waitKey(1)
+        if self.checkFrame():
+            cv2.imshow('mask' , self.treatForLines())
+            cv2.waitKey(1)
         return
 
     def mobileNet(self):
