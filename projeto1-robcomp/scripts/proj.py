@@ -8,7 +8,7 @@ import tf
 import math
 import cv2
 import time
-from sensor_msgs.msg import Image, CompressedImage
+from sensor_msgs.msg import Image, CompressedImage, CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
 from tf import transformations
 # from tf import TransformerROS
@@ -90,6 +90,14 @@ if __name__=="__main__":
 	rospy.init_node("cor")
 	topico_imagem = "/camera/rgb/image_raw/compressed"
 	topico_imagem2 = "/raspicam/rgb/image_raw/compressed"
+	topico_cameraInfo = "/camera/rgb/camera_info"
+	recebedor = rospy.Subscriber(topico_cameraInfo, CameraInfo, ai.setCameraInfo)
+	
+	print("Esperando mensagem sobre camera Info")
+	# camera_info_msg = rospy.wait_for_message(topico_cameraInfo, CameraInfo)
+	# ai.setCameraInfo(camera_info_msg)
+	print(ai.cameraInfo, ai.K)
+	
 	recebedor = rospy.Subscriber(topico_imagem, CompressedImage, roda_todo_frame, queue_size=4, buff_size = 2**24)
 	recebe_scan = rospy.Subscriber("/scan", LaserScan, pegaDadosLydar)
 	recebedor = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, recebeAlvar) # Para recebermos notificacoes de que marcadores foram vistos
@@ -118,10 +126,10 @@ if __name__=="__main__":
 
 
 		stateMachine = {
-			"Vagando": 0,
-			"AlinhandoCor": 0,
+			"Vagando": 1,
+			"AlinhandoCor": 1,
 			"AvancandoCor": 0,
-			"Parado": 1,
+			"Parado": 0,
 			"Pegando": 0,
 			"Voltando": 0,
 			"AlinhandoDeposito": 0,
@@ -151,7 +159,7 @@ if __name__=="__main__":
 
 			
 			if ai.checkFrame():
-				print("Markers encontrados: ", ai.markers)
+				# print("Markers encontrados: ", ai.markers)
 				if 1 not in stateMachine.values():
 					print("Fiquei entediado")
 					stateMachine["Vagando"] = 1

@@ -17,7 +17,7 @@ class Line():
         if self.point1.x == self.point2.x:
             self.m = 100000
         else:
-            self.m = (point1.y-point2.y)/(point1.x-point2.x)
+            self.m =(point1.y-point2.y)/(point1.x-point2.x)
 
     def intersect(self, line):
         x1 = self.point1.x

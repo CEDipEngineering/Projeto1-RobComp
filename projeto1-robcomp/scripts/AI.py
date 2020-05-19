@@ -8,6 +8,7 @@ import visao_module
 import rospy
 import matplotlib.pyplot as plt
 import os
+import pickle
 
 
 class AI:
@@ -33,10 +34,18 @@ class AI:
         self.markers = None
         self.angulo = None
         self.angulo_0 = None
+        self.cameraInfo = None
+        self.K = None
         self.counters = {
             "FramesSemAlinhar": 0,
             "FramesSemAlinharEstrada": 0
         }
+
+    def setCameraInfo(self, msg):
+        self.cameraInfo = msg
+        self.K = np.array(self.cameraInfo.K).reshape((3, 3))
+        # pickle.dump(self.K, "test")
+        print(msg)
 
     def alignToTarget(self, point):
         if self.checkFrame():
@@ -301,12 +310,12 @@ class AI:
         print("alvo: {0}; atual: {1}".format(angulocorreto, self.angulo))
 
         # if dx > 0 (esquerda), gire para um lado, para direita, gire para outro
-        if angulocorreto-self.angulo >= 3:
-            kappa = [Vector3(0,0,0), Vector3(0,0,0.4)]
+        if angulocorreto-self.angulo >= 2:
+            kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
             return kappa
 
-        elif angulocorreto-self.angulo <= -3:
-            kappa = [Vector3(0,0,0), Vector3(0,0,-0.4)]
+        elif angulocorreto-self.angulo <= -2:
+            kappa = [Vector3(0,0,0), Vector3(0,0,-0.1)]
             return kappa
              
         return kappa
