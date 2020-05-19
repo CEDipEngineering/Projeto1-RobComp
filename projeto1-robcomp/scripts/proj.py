@@ -46,7 +46,6 @@ check_delay = False
 x = 0
 y = 0
 z = 0 
-id = 0
 xOdom = 0
 yOdom = 0
 contador = 0
@@ -61,52 +60,15 @@ tfl = 0
 
 tf_buffer = tf2_ros.Buffer()
 
-def recebe(msg):
-	global x # O global impede a recriacao de uma variavel local, para podermos usar o x global ja'  declarado
-	global y
-	global z
-	global id
+def recebeAlvar(msg):
+	ai.markers = []
 	for marker in msg.markers:
-		id = marker.id
-		marcador = "ar_marker_" + str(id)
+		ai.markers.append(marker)
 
-		# print(tf_buffer.can_transform(frame, marcador, rospy.Time(0)))
-		header = Header(frame_id=marcador)
-		# Procura a transformacao em sistema de coordenadas entre a base do robo e o marcador numero 100
-		# Note que para seu projeto 1 voce nao vai precisar de nada que tem abaixo, a 
-		# Nao ser que queira levar angulos em conta
-		trans = tf_buffer.lookup_transform(frame, marcador, rospy.Time(0))
-		
-		# Separa as translacoes das rotacoes
-		x = trans.transform.translation.x
-		y = trans.transform.translation.y
-		z = trans.transform.translation.z
-		# ATENCAO: tudo o que vem a seguir e'  so para calcular um angulo
-		# Para medirmos o angulo entre marcador e robo vamos projetar o eixo Z do marcador (perpendicular) 
-		# no eixo X do robo (que e'  a direcao para a frente)
-		t = tf.transformations.translation_matrix([x, y, z])
-		# Encontra as rotacoes e cria uma matriz de rotacao a partir dos quaternions
-		r = tf.transformations.quaternion_matrix([trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z, trans.transform.rotation.w])
-		m = np.dot(r,t) # Criamos a matriz composta por translacoes e rotacoes
-		z_marker = [0,0,1,0] # Sao 4 coordenadas porque e'  um vetor em coordenadas homogeneas
-		v2 = np.dot(m, z_marker)
-		v2_n = v2[0:-1] # Descartamos a ultima posicao
-		n2 = v2_n/linalg.norm(v2_n) # Normalizamos o vetor
-		x_robo = [1,0,0]
-		cosa = np.dot(n2, x_robo) # Projecao do vetor normal ao marcador no x do robo
-		angulo_marcador_robo = math.degrees(math.acos(cosa))
-		# Terminamos
-		# print("id: {} x {} y {} z {} angulo {} ".format(id, x,y,z, angulo_marcador_robo))
 
 def recebe_odometria(data):
-	global xOdom
-	global yOdom
-	global contador
-	global angrobot
-
 	xOdom = data.pose.pose.position.x
 	yOdom = data.pose.pose.position.y
-
 	quat = data.pose.pose.orientation
 	lista = [quat.x, quat.y, quat.z, quat.w]
 	angulos = np.degrees(transformations.euler_from_quaternion(lista))    
@@ -130,7 +92,7 @@ if __name__=="__main__":
 	topico_imagem2 = "/raspicam/rgb/image_raw/compressed"
 	recebedor = rospy.Subscriber(topico_imagem, CompressedImage, roda_todo_frame, queue_size=4, buff_size = 2**24)
 	recebe_scan = rospy.Subscriber("/scan", LaserScan, pegaDadosLydar)
-	# recebedor = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, recebe) # Para recebermos notificacoes de que marcadores foram vistos
+	recebedor = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, recebeAlvar) # Para recebermos notificacoes de que marcadores foram vistos
 	# print("Usando ", topico_imagem)
 
 	velocidade_saida = rospy.Publisher("/cmd_vel", Twist, queue_size = 1)
@@ -147,21 +109,23 @@ if __name__=="__main__":
 
 	try:
 
-		ai.target = ['magenta', 0 , 'cat']
-		#goal1 = ["blue", 11, "cat"]
-		#goal2 = ["green", 21, "dog"]
-		#goal3 = ["magenta", 12, "bike"]
+		goal1 = ["blue", 11, "cat"]
+		goal2 = ["green", 21, "dog"]
+		goal3 = ["magenta", 12, "bicycle"]
+
+		ai.target = goal1
 
 
 
 		stateMachine = {
-			"Vagando": 1,
-			"AlinhandoCor": 1,
+			"Vagando": 0,
+			"AlinhandoCor": 0,
 			"AvancandoCor": 0,
-			"Parado": 0,
+			"Parado": 1,
 			"Pegando": 0,
 			"Voltando": 0,
 			"AlinhandoDeposito": 0,
+			"AvancandoEstrada": 0,
 			"CorrigindoDistancia": 0,
 			"AvancandoDeposito":0,
 			"ReturnPointSet": 0,
@@ -187,7 +151,7 @@ if __name__=="__main__":
 
 			
 			if ai.checkFrame():
-
+				print("Markers encontrados: ", ai.markers)
 				if 1 not in stateMachine.values():
 					print("Fiquei entediado")
 					stateMachine["Vagando"] = 1
@@ -202,9 +166,17 @@ if __name__=="__main__":
 						streetPoint = ai.followRoad()
 						if streetPoint is not None:
 							velArr = ai.alignToTarget(streetPoint)
-							if velArr[1] == Vector3(0,0,0):
-								velArr = ai.fastAdvance()
-
+							stateMachine["AvancandoEstrada"] = 1
+							if stateMachine["AvancandoEstrada"]:
+								velArr = ai.slowAdvance()
+								ai.counters["FramesSemAlinharEstrada"] += 1
+								# print(ai.counters)
+								if ai.counters["FramesSemAlinharEstrada"] >= 2:
+									ai.counters["FramesSemAlinharEstrada"] = 0
+									stateMachine["AvancandoEstrada"] = 0
+									velArr = ai.alignToTarget(streetPoint)
+						# else:
+						# 	velArr = ai.searchRotate()
 						if stateMachine["AlinhandoCor"]:
 							colorPoint = ai.identifyColor(ai.target[0])
 							if colorPoint is not None:
@@ -238,7 +210,7 @@ if __name__=="__main__":
 								velArr = ai.fastAdvance()
 								ai.counters["FramesSemAlinhar"] += 1
 								# print(ai.counters)
-								if ai.counters["FramesSemAlinhar"] >= 10:
+								if ai.counters["FramesSemAlinhar"] >= 15:
 									ai.counters["FramesSemAlinhar"] = 0
 									stateMachine["AvancandoCor"] = 0
 									stateMachine["AlinhandoCor"] = 1
@@ -261,7 +233,8 @@ if __name__=="__main__":
 						if stateMachine["Pegando"]:
 							# Garra
 							tutorial.close_gripper()
-
+							# rospy.sleep()
+							tutorial.go_to_final_position()
 
 
 
@@ -299,39 +272,11 @@ if __name__=="__main__":
 							ai.mobileNet()
 							depositPoint = ai.identifyDeposit()
 							if depositPoint is not None:
-								# print("Achei a cor")
 								velArr = ai.alignToTarget(depositPoint)
 								if velArr[1] == Vector3(0,0,0):
 									stateMachine["AlinhandoDeposito"] = 0
 									stateMachine["AvancandoDeposito"] = 1
-
-
-
-
-							# print(ai.frame.shape)
-						
-							
-					# 			velArr = ai.fastAdvance()
-					# 	else:
-					# 		velArr = [Vector3(0,0,0),Vector3(0,0,0.07)]
-					# else:
-					# 	velArr = ai.alignToTarget(colorPoint)
-					# 	if velArr[1] == Vector3(0,0,0):
-					# 		if not ai.detectProximity():
-					# 			velArr = ai.fastAdvance()
-					# 		elif velArr != [Vector3(0,0,0),Vector3(0,0,0)]:
-					# 			velArr = ai.setDistance(0.25)
-					# 		else:
-					# 			print("acabei")
-
-
-			
-
-
-			 	# ai.mobileNet()
-			 	# resultados = ai.mobileNetResults
-			 	# for r in resultados:
-			 	# 	print(r)			
+		
 			
 			vel = Twist(velArr[0], velArr[1])
 			velocidade_saida.publish(vel)

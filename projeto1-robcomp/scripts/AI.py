@@ -14,7 +14,7 @@ class AI:
 
     def __init__(self):
         self.frame = None
-        self.buffering = 10
+        self.buffering = 5
         self.lista_goodLeft = [0]*self.buffering
         self.lista_goodRight = [0]*self.buffering
         self.leftBuffer = 0
@@ -30,10 +30,12 @@ class AI:
         self.y_0 = None
         self.x   = None
         self.y   = None
+        self.markers = None
         self.angulo = None
         self.angulo_0 = None
         self.counters = {
-            "FramesSemAlinhar": 0
+            "FramesSemAlinhar": 0,
+            "FramesSemAlinharEstrada": 0
         }
 
     def alignToTarget(self, point):
@@ -50,9 +52,9 @@ class AI:
             
             tol = 5
             if direction >= tol: 
-                velArr = [Vector3(0,0,0), Vector3(0,0,-0.07)]
+                velArr = [Vector3(0,0,0), Vector3(0,0,-0.08)]
             elif direction <= -tol:
-                velArr = [Vector3(0,0,0), Vector3(0,0,0.07)]
+                velArr = [Vector3(0,0,0), Vector3(0,0,0.08)]
             return velArr
     
     def followRoad(self):
@@ -136,7 +138,7 @@ class AI:
         cv2.circle(self.modifiedFrame, (point[0], point[1]), 3, (0,0,0), 2)
         point = Point(point[0], point[1])
         
-        if area > 150:
+        if area > 200:
             return point
         return    
 
@@ -144,9 +146,8 @@ class AI:
         pass
 
     def searchRotate(self):
-        velArr = [Vector3(0,0,0), Vector3(0,0,0.1)]
-        pass
-
+        return [Vector3(0,0,0), Vector3(0,0,0.1)]
+        
     def fastAdvance(self):
         velArr = [Vector3(0.15,0,0), Vector3(0,0,0)]
         return velArr
@@ -294,14 +295,20 @@ class AI:
             angulocorreto -= 180
 
 
+
         kappa = [Vector3(0,0,0), Vector3(0,0,0)]
 
         print("alvo: {0}; atual: {1}".format(angulocorreto, self.angulo))
 
         # if dx > 0 (esquerda), gire para um lado, para direita, gire para outro
-        if abs(angulocorreto-self.angulo) >= 5:
+        if angulocorreto-self.angulo >= 3:
+            kappa = [Vector3(0,0,0), Vector3(0,0,0.4)]
+            return kappa
+
+        elif angulocorreto-self.angulo <= -3:
             kappa = [Vector3(0,0,0), Vector3(0,0,-0.4)]
             return kappa
+             
         return kappa
 
     def goReturningPoint(self):
