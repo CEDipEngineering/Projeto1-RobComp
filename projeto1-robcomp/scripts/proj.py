@@ -118,10 +118,10 @@ if __name__=="__main__":
 
 
 		stateMachine = {
-			"Vagando": 0,
+			"Vagando": 1,
 			"AlinhandoCor": 0,
 			"AvancandoCor": 0,
-			"Parado": 1,
+			"Parado": 0,
 			"Pegando": 0,
 			"Voltando": 0,
 			"AlinhandoDeposito": 0,
@@ -171,7 +171,7 @@ if __name__=="__main__":
 								velArr = ai.slowAdvance()
 								ai.counters["FramesSemAlinharEstrada"] += 1
 								# print(ai.counters)
-								if ai.counters["FramesSemAlinharEstrada"] >= 2:
+								if ai.counters["FramesSemAlinharEstrada"] >= 5:
 									ai.counters["FramesSemAlinharEstrada"] = 0
 									stateMachine["AvancandoEstrada"] = 0
 									velArr = ai.alignToTarget(streetPoint)
@@ -283,6 +283,7 @@ if __name__=="__main__":
 			# print(velArr)
 			# [print("{0}: {1}".format(k,v)) for k,v in stateMachine.items()]
 			ai.showFrame()
+			ai.showMask()
 			rospy.sleep(0.5)
 
 
