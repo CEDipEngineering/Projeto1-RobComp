@@ -89,15 +89,7 @@ if __name__=="__main__":
 
 	rospy.init_node("cor")
 	topico_imagem = "/camera/rgb/image_raw/compressed"
-	topico_imagem2 = "/raspicam/rgb/image_raw/compressed"
-	topico_cameraInfo = "/camera/rgb/camera_info"
-	recebedor = rospy.Subscriber(topico_cameraInfo, CameraInfo, ai.setCameraInfo)
-	
-	print("Esperando mensagem sobre camera Info")
-	# camera_info_msg = rospy.wait_for_message(topico_cameraInfo, CameraInfo)
-	# ai.setCameraInfo(camera_info_msg)
-	print(ai.cameraInfo, ai.K)
-	
+	topico_imagem2 = "/raspicam/rgb/image_raw/compressed"	
 	recebedor = rospy.Subscriber(topico_imagem, CompressedImage, roda_todo_frame, queue_size=4, buff_size = 2**24)
 	recebe_scan = rospy.Subscriber("/scan", LaserScan, pegaDadosLydar)
 	recebedor = rospy.Subscriber("/ar_pose_marker", AlvarMarkers, recebeAlvar) # Para recebermos notificacoes de que marcadores foram vistos
@@ -127,11 +119,7 @@ if __name__=="__main__":
 
 		stateMachine = {
 			"Vagando": 1,
-<<<<<<< HEAD
 			"AlinhandoCor": 1,
-=======
-			"AlinhandoCor": 0,
->>>>>>> 310086d915dcc915b9378b1e88cc9b571fd3a87a
 			"AvancandoCor": 0,
 			"Parado": 0,
 			"Pegando": 0,
@@ -160,7 +148,23 @@ if __name__=="__main__":
 			# else:
 			# 	velArr = ai.fastAdvance()
 
-
+			if ai.markers is not None:
+				if len(ai.markers) != 0:
+					marker = ai.markers[0].pose.pose.position
+					print(np.array([[marker.x, marker.y, marker.z]]))
+					point = np.array([marker.x, marker.y, marker.z])
+					
+					z = point[0]
+					x = -point[1]
+					y = -point[2]
+					px = x*ai.K[0][0]/z + ai.K[0][2]
+					py = y*ai.K[1][1]/z + ai.K[1][2]
+					pt = np.array([px, py], dtype=int)
+					
+					# pt, jacob = cv2.projectPoints(np.array([[marker.x, marker.y, marker.z]], dtype=np.float32), np.zeros((3,1), dtype=np.float32), np.zeros((3,1), dtype = np.float32), ai.K, ai.D)
+					print(pt)
+					
+					cv2.circle(ai.modifiedFrame, (pt[0], pt[1]), 3, (0,0,255), 3)
 			
 			if ai.checkFrame():
 				# print("Markers encontrados: ", ai.markers)
@@ -295,7 +299,7 @@ if __name__=="__main__":
 			# print(velArr)
 			# [print("{0}: {1}".format(k,v)) for k,v in stateMachine.items()]
 			ai.showFrame()
-			ai.showMask()
+			# ai.showMask()
 			rospy.sleep(0.5)
 
 

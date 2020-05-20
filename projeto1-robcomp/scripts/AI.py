@@ -34,18 +34,15 @@ class AI:
         self.markers = None
         self.angulo = None
         self.angulo_0 = None
-        self.cameraInfo = None
-        self.K = None
+        with open("camParams.txt", "r") as fileObj:
+            self.cameraInfo = np.fromstring(fileObj.read(), dtype=np.float32, sep=',')
+            self.K = self.cameraInfo.reshape((3,3))
+            self.D = np.array([0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)
+            print(self.cameraInfo)
         self.counters = {
             "FramesSemAlinhar": 0,
             "FramesSemAlinharEstrada": 0
         }
-
-    def setCameraInfo(self, msg):
-        self.cameraInfo = msg
-        self.K = np.array(self.cameraInfo.K).reshape((3, 3))
-        # pickle.dump(self.K, "test")
-        print(msg)
 
     def alignToTarget(self, point):
         if self.checkFrame():
@@ -82,11 +79,11 @@ class AI:
                 for line in lines:
                     x1, y1, x2, y2 = line[0]
                     pt1 = Point(x1,y1)
-                    print(pt1.x, pt1.y)
+                    # print(pt1.x, pt1.y)
                     pt2 = Point(x2,y2)
-                    print(pt2.x, pt2.y)
+                    # print(pt2.x, pt2.y)
                     lin = Line(pt1,pt2)
-                    print(lin.m)
+                    # print(lin.m)
                     # cv2.line(self.modifiedFrame, pt1.getTuple(), pt2.getTuple(),(255,0,0),2)
                     # print("m = " + str(lin.m))
                     if lin.m <= -0.2:
