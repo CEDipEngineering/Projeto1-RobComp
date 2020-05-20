@@ -109,7 +109,7 @@ if __name__=="__main__":
 
 	try:
 
-		goal1 = ["blue", 21, "cat"]
+		goal1 = ["blue", 11, "cat"]
 		goal2 = ["green", 21, "dog"]
 		goal3 = ["magenta", 12, "bicycle"]
 

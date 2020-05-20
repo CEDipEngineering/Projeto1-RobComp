@@ -32,7 +32,7 @@ class AI:
         self.markers = []
         self.angulo = None
         self.angulo_0 = None
-        with open("camParams.txt", "r") as fileObj:
+        with open("Projeto1-RobComp/projeto1-robcomp/scripts/camParams.txt", "r") as fileObj:
             self.cameraInfo = np.fromstring(fileObj.read(), dtype=np.float32, sep=',')
             self.K = self.cameraInfo.reshape((3,3))
             self.D = np.array([0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)
