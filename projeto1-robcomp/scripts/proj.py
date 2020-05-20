@@ -227,7 +227,7 @@ if __name__=="__main__":
 									
 						
 						if stateMachine["CorrigindoDistancia"]:
-							velArr = ai.setDistance(0.16)
+							velArr = ai.setDistance(0.18)
 							if velArr == [Vector3(0,0,0),Vector3(0,0,0)]:
 								stateMachine["CorrigindoDistancia"] = 0
 								stateMachine["Pegando"] = 1

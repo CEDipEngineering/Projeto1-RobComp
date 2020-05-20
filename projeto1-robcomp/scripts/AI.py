@@ -324,11 +324,11 @@ class AI:
 
         # if dx > 0 (esquerda), gire para um lado, para direita, gire para outro
         if angulocorreto-self.angulo >= 2:
-            kappa = [Vector3(0,0,0), Vector3(0,0,0.1)]
+            kappa = [Vector3(0,0,0), Vector3(0,0,0.2)]
             return kappa
 
         elif angulocorreto-self.angulo <= -2:
-            kappa = [Vector3(0,0,0), Vector3(0,0,-0.1)]
+            kappa = [Vector3(0,0,0), Vector3(0,0,-0.2)]
             return kappa
              
         return kappa

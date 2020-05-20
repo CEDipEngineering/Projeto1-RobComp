@@ -120,7 +120,7 @@ class MoveGroupPythonIntefaceTutorial(object):
     def go_to_initial_position(self):
         move_group = self.move_group
         joint_goal = move_group.get_current_joint_values()
-        home_angles =  (0., 0.300, -0.915, 0.580) # joints 1,2,3,4
+        home_angles =  (0., 0.109, 0.039, -0.203) # joints 1,2,3,4
         joint_goal = home_angles 
         move_group.go(joint_goal, wait=True)
         move_group.stop()
@@ -153,7 +153,7 @@ class MoveGroupPythonIntefaceTutorial(object):
     def go_to_final_position(self):
         move_group = self.move_group
         joint_goal = move_group.get_current_joint_values()
-        home_angles =  (-1.200, 0.300, -0.915, 0.580) # joints 1,2,3,4
+        home_angles =  (0., -0.359, -0.365, 0.680) # joints 1,2,3,4
         joint_goal = home_angles 
         move_group.go(joint_goal, wait=True)
         move_group.stop()
