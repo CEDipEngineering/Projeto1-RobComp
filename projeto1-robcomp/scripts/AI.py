@@ -131,8 +131,8 @@ class AI:
     def identifyColor(self):
         colorDict = {
             "blue":[np.array([90,80,80]), np.array([155,255,255])],
-            "green":[np.array([45,80,80]), np.array([90,255,255])],
-            "magenta":[np.array([140,80,80]), np.array([180,255,255])]
+            "green":[np.array([45,200,150]), np.array([90,255,255])],
+            "magenta":[np.array([140,150,150]), np.array([160,255,255])]
         }
         color = self.target[0].lower()
         try:
