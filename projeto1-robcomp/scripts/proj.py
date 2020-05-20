@@ -109,7 +109,7 @@ if __name__=="__main__":
 
 	try:
 
-		goal1 = ["blue", 11, "cat"]
+		goal1 = ["blue", 21, "cat"]
 		goal2 = ["green", 21, "dog"]
 		goal3 = ["magenta", 12, "bicycle"]
 
@@ -124,6 +124,7 @@ if __name__=="__main__":
 			"Parado": 0,
 			"Pegando": 0,
 			"Voltando": 0,
+			"IDConfirmado": 0,
 			"AlinhandoDeposito": 0,
 			"AvancandoEstrada": 0,
 			"CorrigindoDistancia": 0,
@@ -147,31 +148,13 @@ if __name__=="__main__":
 			# 	print(ai.lydar[0])
 			# else:
 			# 	velArr = ai.fastAdvance()
-
-			if ai.markers is not None:
-				if len(ai.markers) != 0:
-					marker = ai.markers[0].pose.pose.position
-					print(np.array([[marker.x, marker.y, marker.z]]))
-					point = np.array([marker.x, marker.y, marker.z])
-					
-					z = point[0]
-					x = -point[1]
-					y = -point[2]
-					px = x*ai.K[0][0]/z + ai.K[0][2]
-					py = y*ai.K[1][1]/z + ai.K[1][2]
-					pt = np.array([px, py], dtype=int)
-					
-					# pt, jacob = cv2.projectPoints(np.array([[marker.x, marker.y, marker.z]], dtype=np.float32), np.zeros((3,1), dtype=np.float32), np.zeros((3,1), dtype = np.float32), ai.K, ai.D)
-					print(pt)
-					
-					cv2.circle(ai.modifiedFrame, (pt[0], pt[1]), 3, (0,0,255), 3)
 			
 			if ai.checkFrame():
 				# print("Markers encontrados: ", ai.markers)
 				if 1 not in stateMachine.values():
 					print("Fiquei entediado")
 					stateMachine["Vagando"] = 1
-				
+
 
 				if stateMachine["Parado"]:
 					velArr = [Vector3(0,0,0),Vector3(0,0,0)]
@@ -194,9 +177,12 @@ if __name__=="__main__":
 						# else:
 						# 	velArr = ai.searchRotate()
 						if stateMachine["AlinhandoCor"]:
-							colorPoint = ai.identifyColor(ai.target[0])
-							if colorPoint is not None:
-								stateMachine["Vagando"] = 0
+							colorPoint = ai.identifyColor()
+							IDPoint = ai.identifyId()
+							if colorPoint is not None and IDPoint is not None:
+								if abs(colorPoint.x - IDPoint.x) <= 5:
+									stateMachine["Vagando"] = 0
+									stateMachine["IDConfirmado"] = 1
 						
 						if stateMachine["AlinhandoDeposito"]:
 							ai.mobileNet()
@@ -211,7 +197,7 @@ if __name__=="__main__":
 							if not stateMachine["ReturnPointSet"]:
 								ai.setReturningPoint()
 								stateMachine["ReturnPointSet"] = 1
-							colorPoint = ai.identifyColor(ai.target[0])
+							colorPoint = ai.identifyColor()
 							if colorPoint is not None:
 								# print("Achei a cor")
 								velArr = ai.alignToTarget(colorPoint)
@@ -298,6 +284,7 @@ if __name__=="__main__":
 			velocidade_saida.publish(vel)
 			# print(velArr)
 			# [print("{0}: {1}".format(k,v)) for k,v in stateMachine.items()]
+			ai.drawStates(stateMachine)
 			ai.showFrame()
 			# ai.showMask()
 			rospy.sleep(0.5)

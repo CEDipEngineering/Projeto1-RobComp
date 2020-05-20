@@ -8,7 +8,6 @@ import visao_module
 import rospy
 import matplotlib.pyplot as plt
 import os
-import pickle
 
 
 class AI:
@@ -24,14 +23,13 @@ class AI:
         self.__acceptableDelay__ = 1.5E9
         self.mobileNetResults = None
         self.modifiedFrame = None
-        #self.lookDownMask = cv2.imread("Projeto1-RobComp/projeto1-robcomp/scripts/mask.png")
-        #self.lookDownMask = cv2.cvtColor(self.lookDownMask, cv2.COLOR_BGR2GRAY)
+        #self.lookDownMask = cv2.cvtColor(cv2.imread("Projeto1-RobComp/projeto1-robcomp/scripts/mask.png"), cv2.COLOR_BGR2GRAY)
         self.target = []
         self.x_0 = None
         self.y_0 = None
         self.x   = None
         self.y   = None
-        self.markers = None
+        self.markers = []
         self.angulo = None
         self.angulo_0 = None
         with open("camParams.txt", "r") as fileObj:
@@ -130,13 +128,13 @@ class AI:
                 else:
                     return
 
-    def identifyColor(self, color):
+    def identifyColor(self):
         colorDict = {
             "blue":[np.array([90,80,80]), np.array([155,255,255])],
             "green":[np.array([45,80,80]), np.array([90,255,255])],
             "magenta":[np.array([140,80,80]), np.array([180,255,255])]
         }
-        color = color.lower()
+        color = self.target[0].lower()
         try:
             colorRange = colorDict[color]
         except KeyError as e:
@@ -152,7 +150,21 @@ class AI:
         return    
 
     def identifyId(self):
-        pass
+        if len(self.markers) != 0:
+            for marker in self.markers:
+                foundID = marker.id
+                marker = self.markers[0].pose.pose.position
+                point = np.array([marker.x, marker.y, marker.z])
+                z = point[0]
+                x = -point[1]
+                y = -point[2]
+                px = x*self.K[0][0]/z + self.K[0][2]
+                py = y*self.K[1][1]/z + self.K[1][2]
+                pt = np.array([px, py], dtype=int)
+                cv2.circle(self.modifiedFrame, (pt[0], pt[1]), 3, (0,0,255), 3)
+                cv2.putText(self.modifiedFrame, ("ID: %i"%foundID), (pt[0] + 5, pt[1] + 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,0), 2)
+                if foundID == self.target[1]: 
+                    return Point(px,py)
 
     def searchRotate(self):
         return [Vector3(0,0,0), Vector3(0,0,0.1)]
@@ -385,3 +397,14 @@ class AI:
                 return i
         return
 
+    def drawStates(self, stateDict):
+        if self.checkFrame():
+            counter = 1
+            stepSize = 24
+            for k,v in stateDict.items():
+                if v:
+                    COLOR = (0,0,0)
+                    if v == "IDConfirmado":
+                        COLOR = (0,0,255)
+                    cv2.putText(self.modifiedFrame, k, (0, stepSize*counter), cv2.FONT_HERSHEY_SIMPLEX, 1, COLOR, 2)
+                    counter += 1
