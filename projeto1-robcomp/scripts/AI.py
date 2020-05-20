@@ -404,7 +404,7 @@ class AI:
             for k,v in stateDict.items():
                 if v:
                     COLOR = (0,0,0)
-                    if v == "IDConfirmado":
+                    if k == "IDConfirmado":
                         COLOR = (0,0,255)
                     cv2.putText(self.modifiedFrame, k, (0, stepSize*counter), cv2.FONT_HERSHEY_SIMPLEX, 1, COLOR, 2)
                     counter += 1
