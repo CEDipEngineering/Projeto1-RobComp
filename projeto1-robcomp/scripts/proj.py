@@ -113,7 +113,7 @@ if __name__=="__main__":
 		goal2 = ["green", 21, "dog"]
 		goal3 = ["magenta", 12, "bicycle"]
 
-		ai.target = goal1
+		ai.target = goal3
 
 
 
@@ -177,19 +177,19 @@ if __name__=="__main__":
 						# else:
 						# 	velArr = ai.searchRotate()
 						if stateMachine["AlinhandoCor"]:
-							colorPoint = ai.identifyColor()
-							IDPoint = ai.identifyId()
-							if colorPoint is not None and IDPoint is not None:
-								if abs(colorPoint.x - IDPoint.x) <= 5:
-									stateMachine["Vagando"] = 0
-									stateMachine["IDConfirmado"] = 1
+							colorPoint = ai.identifyCreeper()
+							if colorPoint is not None:
+								print(colorPoint.getTuple())
+								stateMachine["Vagando"] = 0
+								stateMachine["AvancandoEstrada"] = 0
 						
 						if stateMachine["AlinhandoDeposito"]:
 							ai.mobileNet()
 							depositPoint = ai.identifyDeposit()
 							if depositPoint is not None:
 								stateMachine["Vagando"] = 0
-							
+								stateMachine["AvancandoEstrada"] = 0
+
 					
 					else:
 						if stateMachine["AlinhandoCor"]:
@@ -197,13 +197,14 @@ if __name__=="__main__":
 							if not stateMachine["ReturnPointSet"]:
 								ai.setReturningPoint()
 								stateMachine["ReturnPointSet"] = 1
-							colorPoint = ai.identifyColor()
+							colorPoint = ai.identifyCreeper()
 							if colorPoint is not None:
 								# print("Achei a cor")
 								velArr = ai.alignToTarget(colorPoint)
 								if velArr[1] == Vector3(0,0,0):
 									stateMachine["AlinhandoCor"] = 0
 									stateMachine["AvancandoCor"] = 1
+
 						if stateMachine["AvancandoCor"]:
 							if ai.detectProximity():
 								stateMachine["AvancandoCor"] = 0
@@ -216,14 +217,6 @@ if __name__=="__main__":
 									ai.counters["FramesSemAlinhar"] = 0
 									stateMachine["AvancandoCor"] = 0
 									stateMachine["AlinhandoCor"] = 1
-						
-
-						if stateMachine["AvancandoDeposito"]:
-							if ai.detectProximity():
-								stateMachine["AvancandoDeposito"] = 0
-								tutorial.open_gripper()
-							else: 
-								velArr = ai.fastAdvance()
 									
 						
 						if stateMachine["CorrigindoDistancia"]:
@@ -278,7 +271,15 @@ if __name__=="__main__":
 								if velArr[1] == Vector3(0,0,0):
 									stateMachine["AlinhandoDeposito"] = 0
 									stateMachine["AvancandoDeposito"] = 1
-		
+							else:
+								velArr = [Vector3(0.1,0,0), Vector3(0,0,0)]
+
+						if stateMachine["AvancandoDeposito"]:
+							if ai.detectProximity():
+								stateMachine["AvancandoDeposito"] = 0
+								tutorial.open_gripper()
+							else: 
+								velArr = ai.fastAdvance()
 			
 			vel = Twist(velArr[0], velArr[1])
 			velocidade_saida.publish(vel)

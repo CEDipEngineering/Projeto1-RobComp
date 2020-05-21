@@ -129,6 +129,10 @@ class AI:
                     return
 
     def identifyColor(self):
+        print("""
+        DEPRECATED USE OF identifyColor FUNCTION!
+        PLEASE REFER TO identifyCreeper FUNCTION!
+        """)
         colorDict = {
             "blue":[np.array([90,80,80]), np.array([130,255,255])],
             "green":[np.array([45,200,150]), np.array([90,255,255])],
@@ -140,8 +144,12 @@ class AI:
         except KeyError as e:
             print("Cor fornecida '" + str(e) + "' nao e valida.")
             return 
+            
+        contours = self._identifica_cor(colorRange[0], colorRange[1])
 
-        point, area = self._identifica_cor(colorRange[0], colorRange[1])
+
+
+        point = np.reshape(contours, (contours.shape[0], 2)).mean(axis=0)
         cv2.circle(self.modifiedFrame, (point[0], point[1]), 3, (0,0,0), 2)
         point = Point(point[0], point[1])
         
@@ -150,6 +158,10 @@ class AI:
         return    
 
     def identifyId(self):
+        print("""
+        DEPRECATED USE OF identifyID FUNCTION!
+        PLEASE REFER TO identifyCreeper FUNCTION!
+        """)
         if len(self.markers) != 0:
             for marker in self.markers:
                 foundID = marker.id
@@ -165,6 +177,49 @@ class AI:
                 cv2.putText(self.modifiedFrame, ("ID: %i"%foundID), (pt[0] + 5, pt[1] + 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,0), 2)
                 if foundID == self.target[1]: 
                     return Point(px,py)
+
+    def identifyCreeper(self):
+        colorDict = {
+            "blue":[np.array([90,80,80]), np.array([130,255,255])],
+            "green":[np.array([45,200,150]), np.array([90,255,255])],
+            "magenta":[np.array([140,150,150]), np.array([160,255,255])]
+        }
+        IDpoint = None
+        if len(self.markers) != 0:
+            for marker in self.markers:
+                foundID = marker.id
+                marker = self.markers[0].pose.pose.position
+                point = np.array([marker.x, marker.y, marker.z])
+                z = point[0]
+                x = -point[1]
+                y = -point[2]
+                px = x*self.K[0][0]/z + self.K[0][2]
+                py = y*self.K[1][1]/z + self.K[1][2]
+                pt = np.array([px, py], dtype=int)
+                cv2.circle(self.modifiedFrame, (pt[0], pt[1]), 3, (0,0,255), 3)
+                cv2.putText(self.modifiedFrame, ("ID: %i"%foundID), (pt[0] + 5, pt[1] + 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,0), 2)
+                if foundID == self.target[1] or foundID == (self.target[1]*10): #Temos que testar se nao e o ID de baixo, que e igual ao de cima, mas termina com 0. 
+                    IDpoint = pt
+                    break
+
+        # Se achar o IDPoint, quer dizer que o ID desejado esta na tela, e podemos prosseguir para ver se a cor esta tambem.
+        print("IDpoint: ", IDpoint)
+        if IDpoint is not None:
+            color = self.target[0].lower()
+            try:
+                colorRange = colorDict[color]
+            except KeyError as e:
+                print("Cor fornecida '" + str(e) + "' nao e valida.")
+                return 
+                
+            contours = self._identifica_cor(colorRange[0], colorRange[1])
+            for contour in contours:
+                colorPoint = np.reshape(contour, (contour.shape[0], 2)).mean(axis=0).astype(np.int32)
+                cv2.circle(self.modifiedFrame, (colorPoint[0], colorPoint[1]), 3, (0,0,0), 2)
+                print("colorPoint: ", colorPoint)
+                if abs(colorPoint[0] - IDpoint[0]) <= 5:
+                    return Point(colorPoint[0], colorPoint[1])
+        return 
 
     def searchRotate(self):
         return [Vector3(0,0,0), Vector3(0,0,0.1)]
@@ -205,13 +260,13 @@ class AI:
         targetTuple = None
 
         for i,e in enumerate(self.mobileNetResults):
-            cv2.rectangle(self.modifiedFrame, e[2], e[3], (0,0,0),3)
             if e[0] == targetClass:
                 targetTuple = e
                 c, p, pt1, pt2 = targetTuple
                 pt1 = Point(pt1[0], pt1[1])
                 pt2 = Point(pt2[0], pt2[1])
                 outPt = Point((pt1.x + pt2.x)/2, (pt1.y + pt2.y)/2)
+                cv2.rectangle(self.modifiedFrame, e[2], e[3], (0,0,0),3)
                 return outPt
         
         return
@@ -273,38 +328,8 @@ class AI:
         segmentado_cor = cv2.inRange(frame_hsv, cor_menor, cor_maior)
         frame_masked = cv2.morphologyEx(segmentado_cor, cv2.MORPH_CLOSE,np.ones((10, 10)))
         contornosMask, arvore = cv2.findContours(frame_masked.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    
-
-        centro = (frame.shape[1]//2, frame.shape[0]//2)
-
-        areas = [cv2.contourArea(x) for x in contornosMask]
-        maior_contorno = None
-        maior_contorno_area = 0
-        for i,e in enumerate(areas):
-            if e > maior_contorno_area:
-                maior_contorno = contornosMask[i]
-                maior_contorno_area = e
-
-        if not maior_contorno is None :
-            cv2.drawContours(frame, [maior_contorno], -1, [0, 0, 255], 5)
-            maior_contorno = np.reshape(maior_contorno, (maior_contorno.shape[0], 2))
-            media = maior_contorno.mean(axis=0)
-            media = media.astype(np.int32)
-            cv2.circle(frame, (media[0], media[1]), 5, [0, 255, 0])
-            #print("Fazendo contornos")
-        else:
-            media = (0, 0)
-
-        # Representa a area e o centro do maior contorno no frame
-        font = cv2.FONT_HERSHEY_COMPLEX_SMALL
-        cv2.putText(frame,"{:d} {:d}".format(*media),(20,100), 1, 4,(255,255,255),2,cv2.LINE_AA)
-        cv2.putText(frame,"{:0.1f}".format(maior_contorno_area),(20,50), 1, 4,(255,255,255),2,cv2.LINE_AA)
-
-        # cv2.imshow('video', frame)
-        #cv2.imshow('frame', frame)
-        #cv2.waitKey(1)
-
-        return media, maior_contorno_area
+        contornos = sorted(contornosMask, key = cv2.contourArea)
+        return contornosMask
     
     def pointToReturn(self):
         angulocorreto = np.arctan(((self.y-self.y_0)/(self.x-self.x_0)))*180/np.pi
