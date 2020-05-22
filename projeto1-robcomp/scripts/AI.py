@@ -333,30 +333,46 @@ class AI:
     
     def pointToReturn(self):
         angulocorreto = np.arctan(((self.y-self.y_0)/(self.x-self.x_0)))*180/np.pi
-
-
-        #Magnifico
-        if abs(angulocorreto-180)>180:
-            angulocorreto += 180
-        else:
-            angulocorreto -= 180
-
-
-
+        kappa = [Vector3(0,0,0), Vector3(0,0,-0.05)]
+        if (self.x-self.x_0)==0 and (self.y-self.y_0)>0:
+            angulocorreto = -90
+            if (self.angulo < (angulocorreto+1) and self.angulo > (angulocorreto-1)) == False:
+                print(angulocorreto, self.angulo)
+                return  kappa
+        elif (self.x-self.x_0)==0 and (self.y-self.y_0)<0:
+            angulocorreto = 90 
+            if (self.angulo < (angulocorreto+1) and self.angulo > (angulocorreto-1)) == False:
+                print(angulocorreto, self.angulo)
+                return  kappa
+        elif (self.y-self.y_0)==0 and (self.x-self.x_0)>0:
+            angulocorreto = -180 
+            if (self.angulo < (angulocorreto+1) and self.angulo > (angulocorreto-1)) == False:
+                print(angulocorreto, self.angulo)
+                return  kappa
+        elif (self.y-self.y_0)==0 and (self.x-self.x_0)<0:
+            angulocorreto = 0
+            if (self.angulo < (angulocorreto+1) and self.angulo > (angulocorreto-1)) == False:
+                print(angulocorreto, self.angulo)
+                return  kappa
+        elif (self.x-self.x_0)>0 and (self.y-self.y_0)>0:
+            if (self.angulo < (angulocorreto+1-180) and self.angulo > (angulocorreto-1-180)) == False:
+                print(angulocorreto-180, self.angulo)
+                return  kappa
+        elif (self.x-self.x_0)<0 and (self.y-self.y_0)<0:
+            if (self.angulo < (angulocorreto+1) and self.angulo > (angulocorreto-1)) == False:
+                print(angulocorreto, self.angulo)
+                return  kappa
+        elif (self.x-self.x_0)>0 and (self.y-self.y_0)<0:
+            if (self.angulo < (angulocorreto+1+180) and self.angulo > (angulocorreto-1+180)) == False:
+                print(angulocorreto+180, self.angulo)
+                return  kappa
+        elif (self.x-self.x_0)<0 and (self.y-self.y_0)>0:
+            if (self.angulo < (angulocorreto+1) and self.angulo > (angulocorreto-1)) == False:
+                print(angulocorreto, self.angulo)
+                return  kappa
         kappa = [Vector3(0,0,0), Vector3(0,0,0)]
-
-        print("alvo: {0}; atual: {1}".format(angulocorreto, self.angulo))
-
-        # if dx > 0 (esquerda), gire para um lado, para direita, gire para outro
-        if angulocorreto-self.angulo >= 2:
-            kappa = [Vector3(0,0,0), Vector3(0,0,0.2)]
-            return kappa
-
-        elif angulocorreto-self.angulo <= -2:
-            kappa = [Vector3(0,0,0), Vector3(0,0,-0.2)]
-            return kappa
-             
         return kappa
+    
 
     def goReturningPoint(self):
         kappa = [Vector3(0,0,0), Vector3(0,0,0)]
