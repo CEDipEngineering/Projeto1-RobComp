@@ -113,7 +113,7 @@ if __name__=="__main__":
 		goal2 = ["green", 21, "dog"]
 		goal3 = ["magenta", 12, "bicycle"]
 
-		ai.target = goal3
+		ai.target = goal1
 
 
 
@@ -141,7 +141,7 @@ if __name__=="__main__":
 
 		while not rospy.is_shutdown():
 			velArr = [Vector3(0,0,0),Vector3(0,0,0)]
-
+ 
 			# print(ai.detectProximity())
 			# if ai.detectProximity():
 			# 	ai.setDistance(0.25)
@@ -182,6 +182,7 @@ if __name__=="__main__":
 								print(colorPoint.getTuple())
 								stateMachine["Vagando"] = 0
 								stateMachine["AvancandoEstrada"] = 0
+								stateMachine["IDConfirmado"] = 1
 						
 						if stateMachine["AlinhandoDeposito"]:
 							ai.mobileNet()
@@ -213,14 +214,14 @@ if __name__=="__main__":
 								velArr = ai.fastAdvance()
 								ai.counters["FramesSemAlinhar"] += 1
 								# print(ai.counters)
-								if ai.counters["FramesSemAlinhar"] >= 15:
+								if ai.counters["FramesSemAlinhar"] >= 10:
 									ai.counters["FramesSemAlinhar"] = 0
 									stateMachine["AvancandoCor"] = 0
 									stateMachine["AlinhandoCor"] = 1
 									
 						
 						if stateMachine["CorrigindoDistancia"]:
-							velArr = ai.setDistance(0.18)
+							velArr = ai.setDistance(0.17)
 							if velArr == [Vector3(0,0,0),Vector3(0,0,0)]:
 								stateMachine["CorrigindoDistancia"] = 0
 								stateMachine["Pegando"] = 1

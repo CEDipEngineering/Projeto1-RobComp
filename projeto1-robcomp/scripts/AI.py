@@ -187,8 +187,10 @@ class AI:
         IDpoint = None
         if len(self.markers) != 0:
             for marker in self.markers:
+                if marker.id == 13:
+                    continue
                 foundID = marker.id
-                marker = self.markers[0].pose.pose.position
+                marker = marker.pose.pose.position
                 point = np.array([marker.x, marker.y, marker.z])
                 z = point[0]
                 x = -point[1]
@@ -198,6 +200,7 @@ class AI:
                 pt = np.array([px, py], dtype=int)
                 cv2.circle(self.modifiedFrame, (pt[0], pt[1]), 3, (0,0,255), 3)
                 cv2.putText(self.modifiedFrame, ("ID: %i"%foundID), (pt[0] + 5, pt[1] + 5), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,0), 2)
+                print("FoundID: ", foundID)
                 if foundID == self.target[1] or foundID == (self.target[1]*10): #Temos que testar se nao e o ID de baixo, que e igual ao de cima, mas termina com 0. 
                     IDpoint = pt
                     break
@@ -225,7 +228,7 @@ class AI:
         return [Vector3(0,0,0), Vector3(0,0,0.1)]
         
     def fastAdvance(self):
-        velArr = [Vector3(0.15,0,0), Vector3(0,0,0)]
+        velArr = [Vector3(0.13,0,0), Vector3(0,0,0)]
         return velArr
 
     def slowAdvance(self):
@@ -333,7 +336,7 @@ class AI:
     
     def pointToReturn(self):
         angulocorreto = np.arctan(((self.y-self.y_0)/(self.x-self.x_0)))*180/np.pi
-        kappa = [Vector3(0,0,0), Vector3(0,0,-0.05)]
+        kappa = [Vector3(0,0,0), Vector3(0,0,0.05)]
         if (self.x-self.x_0)==0 and (self.y-self.y_0)>0:
             angulocorreto = -90
             if (self.angulo < (angulocorreto+1) and self.angulo > (angulocorreto-1)) == False:
@@ -371,8 +374,7 @@ class AI:
                 print(angulocorreto, self.angulo)
                 return  kappa
         kappa = [Vector3(0,0,0), Vector3(0,0,0)]
-        return kappa
-    
+        return kappa 
 
     def goReturningPoint(self):
         kappa = [Vector3(0,0,0), Vector3(0,0,0)]
@@ -409,9 +411,9 @@ class AI:
             arr = [self.lydar[i] for i in arc]
             targetIndex = self._getIndexOfFirstAppearence(arr, min(arr))
             if targetIndex > 18:
-                velArr = [Vector3(0,0,0), Vector3(0,0,0.1)]
+                velArr = [Vector3(0,0,0), Vector3(0,0,0.05)]
             elif targetIndex < 14: 
-                velArr = [Vector3(0,0,0), Vector3(0,0,-0.1)]
+                velArr = [Vector3(0,0,0), Vector3(0,0,-0.05)]
             else:
                 # Then adjust distance
                 if self.lydar[0] >= target + 0.03:
