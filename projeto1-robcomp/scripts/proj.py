@@ -257,22 +257,25 @@ if __name__=="__main__":
 
 
 
-						if stateMachine["AlinhandoDeposito"]:
-							# print("estou alinhando deposit")
-
-							# Nao vamos voltar
-							# if not stateMachine["ReturnPointSet"]:
-							# 	ai.setReturningPoint()
-							# 	stateMachine["ReturnPointSet"] = 1
-							ai.mobileNet()
+						if stateMachine["AvancandoDeposito"]:
+							print("ENTROU AVANCANDODEP")
 							depositPoint = ai.identifyDeposit()
-							if depositPoint is not None:
-								velArr = ai.alignToTarget(depositPoint)
-								if velArr[1] == Vector3(0,0,0):
-									stateMachine["AlinhandoDeposito"] = 0
-									stateMachine["AvancandoDeposito"] = 1
-							else:
-								velArr = [Vector3(0.1,0,0), Vector3(0,0,0)]
+							if ai.detectProximity():
+								stateMachine["AvancandoDeposito"] = 0
+								stateMachine["AvancandoEstrada"] = 0
+								tutorial.open_gripper()
+							else: 
+								print("ENTROU ELSEDEP")
+								velArr = ai.fastAdvance()
+								stateMachine["AvancandoEstrada"] = 0
+								ai.counters["FramesSemAlinharDeposito"] += 1
+								ai.counters["AlinhamentosDeposito"] += 1
+								print(ai.counters["FramesSemAlinharDeposito"],ai.counters["AlinhamentosDeposito"] )
+								if ai.counters["FramesSemAlinharDeposito"] >= 5 and ai.counters["AlinhamentosDeposito"] < 20:
+									print("ENTROU IFDEP")
+									ai.counters["FramesSemAlinharDeposito"] = 0
+									stateMachine["AvancandoDeposito"] = 0
+									stateMachine["AlinhandoDeposito"] = 1
 
 						if stateMachine["AvancandoDeposito"]:
 							if ai.detectProximity():
