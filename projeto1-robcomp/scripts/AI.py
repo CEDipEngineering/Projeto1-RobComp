@@ -42,8 +42,8 @@ class AI:
             "FramesSemAlinharEstrada": 0,
             "FramesSemAlinharDeposito": 0,
             "AlinhamentosDeposito": 0,
-            "VoltandoaVagar":0
-
+            "VoltandoaVagar":0,
+            "DeteccoesMobNet":0
         }
 
     def alignToTarget(self, point):

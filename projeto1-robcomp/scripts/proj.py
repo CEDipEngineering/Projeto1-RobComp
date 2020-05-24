@@ -113,19 +113,19 @@ if __name__=="__main__":
 		goal2 = ["green", 21, "dog"]
 		goal3 = ["magenta", 12, "bicycle"]
 
-		ai.target = goal1
+		ai.target = goal3
 
 
 
 		stateMachine = {
 			"Vagando": 1,
-			"AlinhandoCor": 1,
+			"AlinhandoCor": 0,
 			"AvancandoCor": 0,
 			"Parado": 0,
 			"Pegando": 0,
 			"Voltando": 0,
 			"IDConfirmado": 0,
-			"AlinhandoDeposito": 0,
+			"AlinhandoDeposito": 1,
 			"AvancandoEstrada": 0,
 			"CorrigindoDistancia": 0,
 			"AvancandoDeposito":0,
@@ -188,8 +188,11 @@ if __name__=="__main__":
 							ai.mobileNet()
 							depositPoint = ai.identifyDeposit()
 							if depositPoint is not None:
-								stateMachine["Vagando"] = 0
-								stateMachine["AvancandoEstrada"] = 0
+								ai.counters["DeteccoesMobNet"] += 1
+								velArr = ai.alignToTarget(depositPoint)
+								if ai.counters["DeteccoesMobNet"] >= 20:
+									stateMachine["Vagando"] = 0
+									stateMachine["AvancandoEstrada"] = 0
 
 					
 					else:
