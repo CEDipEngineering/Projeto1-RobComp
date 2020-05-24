@@ -23,7 +23,7 @@ class AI:
         self.__acceptableDelay__ = 1.5E9
         self.mobileNetResults = None
         self.modifiedFrame = None
-        #self.lookDownMask = cv2.cvtColor(cv2.imread("Projeto1-RobComp/projeto1-robcomp/scripts/mask.png"), cv2.COLOR_BGR2GRAY)
+        self.lookDownMask = cv2.cvtColor(cv2.imread("Projeto1-RobComp/projeto1-robcomp/scripts/mask.png"), cv2.COLOR_BGR2GRAY)
         self.target = []
         self.x_0 = None
         self.y_0 = None
@@ -39,7 +39,11 @@ class AI:
             print(self.cameraInfo)
         self.counters = {
             "FramesSemAlinhar": 0,
-            "FramesSemAlinharEstrada": 0
+            "FramesSemAlinharEstrada": 0,
+            "FramesSemAlinharDeposito": 0,
+            "AlinhamentosDeposito": 0,
+            "VoltandoaVagar":0
+
         }
 
     def alignToTarget(self, point):
@@ -333,43 +337,88 @@ class AI:
     
     def pointToReturn(self):
         angulocorreto = np.arctan(((self.y-self.y_0)/(self.x-self.x_0)))*180/np.pi
-        kappa = [Vector3(0,0,0), Vector3(0,0,-0.05)]
+        kappa = [Vector3(0,0,0), Vector3(0,0,-0.08)]
+        kappa2 = [Vector3(0,0,0), Vector3(0,0,0.08)]
+        kappa3 = [Vector3(0,0,0), Vector3(0,0,0)]
         if (self.x-self.x_0)==0 and (self.y-self.y_0)>0:
             angulocorreto = -90
             if (self.angulo < (angulocorreto+1) and self.angulo > (angulocorreto-1)) == False:
                 print(angulocorreto, self.angulo)
-                return  kappa
+                if abs(self.angulo - angulocorreto) >= 5:
+                    return kappa2
+                elif abs(self.angulo - angulocorreto) <= - 5:
+                    return kappa
+                else:
+                    return kappa3  
         elif (self.x-self.x_0)==0 and (self.y-self.y_0)<0:
             angulocorreto = 90 
             if (self.angulo < (angulocorreto+1) and self.angulo > (angulocorreto-1)) == False:
                 print(angulocorreto, self.angulo)
-                return  kappa
+                if abs(self.angulo - angulocorreto) >= 5:
+                    return kappa2
+                elif abs(self.angulo - angulocorreto) <= - 5:
+                    return kappa
+                else:
+                    return kappa3   
+
         elif (self.y-self.y_0)==0 and (self.x-self.x_0)>0:
             angulocorreto = -180 
             if (self.angulo < (angulocorreto+1) and self.angulo > (angulocorreto-1)) == False:
                 print(angulocorreto, self.angulo)
-                return  kappa
+                if abs(self.angulo - angulocorreto) >= 5:
+                    return kappa2
+                elif abs(self.angulo - angulocorreto) <= - 5:
+                    return kappa
+                else:
+                    return kappa3  
         elif (self.y-self.y_0)==0 and (self.x-self.x_0)<0:
             angulocorreto = 0
             if (self.angulo < (angulocorreto+1) and self.angulo > (angulocorreto-1)) == False:
                 print(angulocorreto, self.angulo)
-                return  kappa
+                if abs(self.angulo - angulocorreto) >= 5:
+                    return kappa2
+                elif abs(self.angulo - angulocorreto) <= - 5:
+                    return kappa
+                else:
+                    return kappa3 
         elif (self.x-self.x_0)>0 and (self.y-self.y_0)>0:
             if (self.angulo < (angulocorreto+1-180) and self.angulo > (angulocorreto-1-180)) == False:
                 print(angulocorreto-180, self.angulo)
-                return  kappa
+                if abs(self.angulo - angulocorreto) >= 5:
+                    return kappa2
+                elif abs(self.angulo - angulocorreto) <= - 5:
+                    return kappa
+                else:
+                    return kappa3  
         elif (self.x-self.x_0)<0 and (self.y-self.y_0)<0:
             if (self.angulo < (angulocorreto+1) and self.angulo > (angulocorreto-1)) == False:
                 print(angulocorreto, self.angulo)
-                return  kappa
+                if abs(self.angulo - angulocorreto) >= 5:
+                    return kappa2
+                elif abs(self.angulo - angulocorreto) <= - 5:
+                    return kappa
+                else:
+                    return kappa3  
         elif (self.x-self.x_0)>0 and (self.y-self.y_0)<0:
             if (self.angulo < (angulocorreto+1+180) and self.angulo > (angulocorreto-1+180)) == False:
                 print(angulocorreto+180, self.angulo)
-                return  kappa
+                if abs(self.angulo - angulocorreto) >= 5:
+                    return kappa2
+                elif abs(self.angulo - angulocorreto) <= - 5:
+                    return kappa
+                else:
+                    return kappa3 
         elif (self.x-self.x_0)<0 and (self.y-self.y_0)>0:
             if (self.angulo < (angulocorreto+1) and self.angulo > (angulocorreto-1)) == False:
                 print(angulocorreto, self.angulo)
-                return  kappa
+                if abs(self.angulo - angulocorreto) >= 5:
+                    return kappa2
+                elif abs(self.angulo - angulocorreto) <= - 5:
+                    return kappa
+                else:
+                    return kappa3 
+
+
         kappa = [Vector3(0,0,0), Vector3(0,0,0)]
         return kappa
     
@@ -378,8 +427,8 @@ class AI:
         kappa = [Vector3(0,0,0), Vector3(0,0,0)]
         print("Estou em: ({0},{1})".format(self.x, self.y))
         print("Indo para: ({0},{1})".format(self.x_0, self.y_0))
-        if abs(self.x-self.x_0)>0.3 or abs(self.y-self.y_0)>0.3:
-            kappa = [Vector3(0.1,0,0), Vector3(0,0,0)]
+        if abs(self.x-self.x_0)>0.1 or abs(self.y-self.y_0)>0.1:
+            kappa = [Vector3(0.3,0,0), Vector3(0,0,0)]
             return kappa
         return kappa
 
