@@ -113,7 +113,7 @@ if __name__=="__main__":
 		goal2 = ["green", 21, "dog"]
 		goal3 = ["magenta", 12, "bicycle"]
 
-		ai.target = goal3
+		ai.target = goal2
 
 
 
@@ -191,8 +191,10 @@ if __name__=="__main__":
 								ai.counters["DeteccoesMobNet"] += 1
 								velArr = ai.alignToTarget(depositPoint)
 								if ai.counters["DeteccoesMobNet"] >= 20:
+									print("IFDETECOES")
 									stateMachine["Vagando"] = 0
 									stateMachine["AvancandoEstrada"] = 0
+									stateMachine["AvancandoDeposito"] = 1
 
 					
 					else:
@@ -262,6 +264,7 @@ if __name__=="__main__":
 
 
 						if stateMachine["AvancandoDeposito"]:
+							ai.mobileNet()
 							print("ENTROU AVANCANDODEP")
 							depositPoint = ai.identifyDeposit()
 							if ai.detectProximity():
@@ -275,18 +278,13 @@ if __name__=="__main__":
 								ai.counters["FramesSemAlinharDeposito"] += 1
 								ai.counters["AlinhamentosDeposito"] += 1
 								print(ai.counters["FramesSemAlinharDeposito"],ai.counters["AlinhamentosDeposito"] )
-								if ai.counters["FramesSemAlinharDeposito"] >= 5 and ai.counters["AlinhamentosDeposito"] < 20:
+								if ai.counters["FramesSemAlinharDeposito"] == 5 or ai.counters["FramesSemAlinharDeposito"] == 10: 
 									print("ENTROU IFDEP")
-									ai.counters["FramesSemAlinharDeposito"] = 0
 									stateMachine["AvancandoDeposito"] = 0
 									stateMachine["AlinhandoDeposito"] = 1
+									stateMachine["Vagando"] = 1
 
-						if stateMachine["AvancandoDeposito"]:
-							if ai.detectProximity():
-								stateMachine["AvancandoDeposito"] = 0
-								tutorial.open_gripper()
-							else: 
-								velArr = ai.fastAdvance()
+
 			
 			vel = Twist(velArr[0], velArr[1])
 			velocidade_saida.publish(vel)

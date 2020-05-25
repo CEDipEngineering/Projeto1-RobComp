@@ -477,7 +477,7 @@ class AI:
         return [Vector3(0,0,0), Vector3(0,0,0)]
 
     def resetAngle(self):
-        if abs(self.angulo_0-self.angulo) >= 10:
+        if abs((self.angulo_0+15)-self.angulo) >= 10:
             kappa = [Vector3(0,0,0), Vector3(0,0,0.4)]
             return kappa
         else:
