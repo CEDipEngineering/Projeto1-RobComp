@@ -119,13 +119,13 @@ if __name__=="__main__":
 
 		stateMachine = {
 			"Vagando": 1,
-			"AlinhandoCor": 0,
+			"AlinhandoCor": 1,
 			"AvancandoCor": 0,
 			"Parado": 0,
 			"Pegando": 0,
 			"Voltando": 0,
 			"IDConfirmado": 0,
-			"AlinhandoDeposito": 1,
+			"AlinhandoDeposito": 0,
 			"AvancandoEstrada": 0,
 			"CorrigindoDistancia": 0,
 			"AvancandoDeposito":0,
